@@ -1,0 +1,4 @@
+sudo apt install git
+cd /etc/ansible/
+sudo git clone https://github.com/vmware/pyvmomi-community-samples.git
+cd samples/

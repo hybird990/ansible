@@ -1,0 +1,32 @@
+centos 10
+sudo yum -y install epel-release
+sudo yum install ansible-core 
+ansible --version
+
+#Additional packages
+sudo yum install epel-release python-pip
+sudo yum install python-pip
+sudo pip install --upgrade pyvmomi
+sudo pip install --upgrade paramiko
+sudo pip install --user ansible-pylibssh
+ansible-galaxy collection install ansible.netcommon
+ansible-galaxy collection install vyos.vyos
+
+
+
+#Although we can connect to remote hosts using a password through Ansible it is recommended to set up key-based authentication for easy and secure logins.
+Running the following on your ansible box
+ssh-keygen
+SHA256:F+v/jtSS+uTOMuGeY/JsZqGbMQQUfPykNKZImN+4des user@cnac.vmware.local
+ssh-copy-id vyos@192.168.1.12
+
+
+sudo nano /etc/ansible/hosts
+[servers]
+vyos1 ansible_host=192.168.1.12 ansible_user=vyos
+
+
+ansible all -m ping
+ansible all -i 192.168.1.12, -c ansible.netcommon.network_cli -u vyos -k -m vyos.vyos.vyos_facts -e ansible_network_os=vyos.vyos.vyos
+---------------
+ansible all -m shell -a 'show configuration'

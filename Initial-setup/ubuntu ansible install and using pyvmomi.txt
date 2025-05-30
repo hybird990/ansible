@@ -1,0 +1,83 @@
+Ansible with VMware – Initial setup of ansible “ubuntu” and pyvmomi – Part 1
+By Kad May 23, 2025 #Ansible, #Ansible with VMware, #Automation, #pyVmomi
+
+The first thing about ansible is that it is agentless so makes it easy to automate tasks but the destination does requires ssh. Purpose of it is to automate repeatable tasks, such as login to vcenter and delete all snapshots once a week as a example. The automation tasks are called playbook.
+
+First think we need is a linux machine with Python installed, this linux machine will be the control node that runs ansible. I will be using a ubuntu box.
+
+I have just completed a fresh operating system install of ubuntu, it will need internet access.
+
+Let checks if python is installed.
+
+python3 --version
+//otherwise to install use 
+sudo apt install python3-full
+
+Next we will install ansible
+
+//This command will install everything
+
+pipx install --include-deps ansible
+
+//if you want minimum install use
+
+pipx install ansible-core
+
+//if pipx is not installed you will need to install it first
+
+sudo apt update
+sudo apt install pipx
+pipx ensurepath
+sudo pipx ensurepath --global 
+
+//Back to installing ansible
+
+pipx install --include-deps ansible
+
+Now I will install additional python dependencies that may be needed
+
+ pipx inject ansible argcomplete
+
+Now lets check our ansible version
+
+ansible --version
+
+Now lets make the linux box operational ready like ssh, FQDN, dns and domain
+
+sudo apt install openssh-server
+sudo systemctl start ssh
+sudo systemctl enable ssh
+sudo ufw allow ssh
+
+//also update your FQDN on server
+
+hostname cna.vmware.local
+
+//add dns server and domain search here /etc/resolv.conf
+
+sudo nano /etc/resolv.conf
+
+Next lets install the products for vsphere, pyVmomi is an open-source Python binding for several vSphere SOAP-based APIs.
+
+sudo apt install python3-pip
+
+//forces install of pyvmomi
+
+pip install pyvmomi --break-system-packages
+
+Now lets get some sample projects.
+
+sudo apt install git
+
+sudo git clone https://github.com/vmware/pyvmomi-community-samples.git
+
+in the sample directory there are many python scripts to run task against vcenter
+
+Let try the getting the details from vcenter and deleting a snapshot.
+
+user@cna:/etc/ansible/pyvmomi-community-samples/samples$ python3 vcenter_details.py -s 192.168.1.13 -u administrator@vsphere.local -p VMware1! -nossl
+
+Revert snapshot example
+
+python3 snapshot_operations.py -s 192.168.1.13 -u administrator@vsphere.local -p VMware1! -nossl -v vcf9-esxi-01 -op revert --snapshot-name "before deploy"
+

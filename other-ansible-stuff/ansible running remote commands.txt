@@ -1,0 +1,14 @@
+sudo nano /etc/ansible/hosts
+[hosts]
+test ansible_host=192.168.1.128 ansible_user=user
+
+#if not already done
+ssh-keygen
+
+ssh-copy-id user@192.168.1.128
+yes
+user@192.168.1.128's password:
+
+ansible all -m shell -a "ifconfig"
+ansible hosts -m shell -a "ifconfig"
+ansible hosts -m shell -a "cat /etc/hosts"

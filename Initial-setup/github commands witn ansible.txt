@@ -12,3 +12,11 @@ git push origin HEAD:master
 
 git config --global user.name "user"
 git config --global user.email "user"
+
+# pull from otherway from GitHub to onprem
+git config pull.rebase false
+git pull origin HEAD:master
+
+git config pull.rebase false  # merge
+git config pull.rebase true   # rebase
+git config pull.ff only       # fast-forward only

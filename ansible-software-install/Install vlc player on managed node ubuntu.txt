@@ -1,0 +1,39 @@
+cd /etc/ansible
+cat inventory.ini
+#centos
+192.168.1.151
+#Ubuntu
+192.168.1.130
+
+
+cat /etc/os-release
+sudo apt list --installed | grep vlc
+
+
+sudo nano remove-vlc-ubuntu.yml
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: remove vlc Ubuntu
+    apt:
+      name: vlc
+      state: absent
+    when: ansible_distribution == 'Ubuntu'
+
+
+ansible-playbook --ask-become-pass remove-vlc-ubuntu.yml
+
+sudo nano install-vlc-ubuntu.yml
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: install vlc Ubuntu
+    apt:
+      name: vlc
+    when: ansible_distribution == 'Ubuntu'
+
+ansible-playbook --ask-become-pass install-vlc-ubuntu.yml

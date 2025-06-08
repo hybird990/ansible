@@ -1,0 +1,57 @@
+cat /etc/ansible/inventory.ini
+#centos
+192.168.1.150
+#Ubuntu
+192.168.1.130
+
+sudo nano installingpackage.yml
+---
+- hosts: all
+  become: true
+
+  tasks:
+  - name: Update repo
+    apt:
+     update_cache: yes
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Update repo
+    dnf:
+      name: epel-release
+    when: ansible_distribution == 'CentOS Stream'
+
+  - name: Install vlc Ubuntu
+    apt:
+      name: vlc
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Install vlc CentOS
+    dnf:
+      name: vlc
+    when: ansible_distribution == 'CentOS Stream'
+
+
+ansible-playbook --ask-become-pass installingpackage.yml
+
+
+cat /etc/os-release
+NAME="Ubuntu"
+sudo apt list --installed | grep vlc
+
+cat /etc/os-release
+NAME="CentOS Stream"
+
+remove vlc CentOS
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: remove vlc CentOS
+    dnf:
+      name: vlc
+      state: absent
+#    when: ansible_distribution == 'CentOS Stream'
+
+
+

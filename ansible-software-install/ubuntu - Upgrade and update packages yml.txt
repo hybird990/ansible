@@ -1,0 +1,48 @@
+Upgrade ubuntu yml
+
+yml 1
+
+[user@cnac playbooks]$ cat upgrade-ubuntu-to-next-version.yml
+---
+- hosts: all
+  become: true
+  tasks:
+  - name:  Update apt cache
+    apt:
+      update_cache: yes
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Upgrade to the next Ubuntu release
+    command:
+        cmd: /usr/bin/do-release-upgrade -f DistUpgradeViewNonInteractive
+    when: ansible_distribution == 'Ubuntu'
+
+  - name:  Reboot the system
+    reboot:
+        connect_timeout: 60
+        reboot_timeout: 300
+    when: ansible_distribution == 'Ubuntu'
+
+ ansible-playbook --ask-become-pass upgrade-ubuntu-to-next-version.yml
+
+yml 2
+[user@cnac playbooks]$ cat upgrade-ubuntu-packages.yml
+---
+- hosts: all
+  become: true
+  tasks:
+  - name:  Update apt cache
+    apt:
+      update_cache: yes
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: Upgrade all packages
+    apt:
+       upgrade: yes
+       update_cache: yes
+    when: ansible_distribution == 'Ubuntu'
+
+ansible-playbook --ask-become-pass upgrade-ubuntu-packages.yml
+
+sudo apt update
+cat /var/log/apt/history.log

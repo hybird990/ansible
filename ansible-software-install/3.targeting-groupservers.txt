@@ -1,0 +1,32 @@
+cat inventory.ini
+#centos
+[fileservers]
+192.168.1.151 apache_package=httpd
+#Ubuntu
+[webservers]
+192.168.1.130 apache_package=apache2
+
+
+sudo nano targeting-groupservers.yml
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: install apache2 on Ubuntu
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: fileservers
+  become: true
+  tasks:
+  - name: install samba on Centos
+    dnf:
+      name: samba
+      state: latest
+    when: ansible_distribution == 'CentOS'
+
+
+ 
+ansible-playbook --ask-become-pass targeting-groupservers.yml

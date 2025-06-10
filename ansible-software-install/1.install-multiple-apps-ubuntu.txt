@@ -1,0 +1,19 @@
+sudo nano install-multiple-apps-ubuntu.yml
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: install vlc and apache2 Ubuntu
+    apt:
+      name:
+        - vlc
+        - apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+
+
+ansible-playbook --ask-become-pass install-multiple-apps-ubuntu.yml
+
+

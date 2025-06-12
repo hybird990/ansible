@@ -1,0 +1,36 @@
+sudo mkdir webfiles
+sudo nano default-site.html
+<html>
+        <title> ansible website </title>
+        <body><p>Ansible is a great automation tool</p></body>
+</html>
+
+
+
+sudo nano copyfiles.yml
+
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: install apache2 on Ubuntu
+    tags: webserver
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: webservers
+  become: true
+  tasks:
+  - name: copy file to webserver
+    tags: webserver
+    copy:
+      src: /etc/ansible/webfiles/default-site.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode: 0644
+    when: ansible_distribution == 'Ubuntu'
+
+ansible-playbook --ask-become-pass copyfiles.yml

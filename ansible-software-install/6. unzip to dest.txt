@@ -1,0 +1,37 @@
+unzip to dest
+unzip to dest
+Here we will install unzip, get a zip file from a URL and unzip and install at the destination location.
+
+https://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz
+https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_386.zip
+
+sudo nano install-unzip-terraform.yml
+
+---
+- hosts: fileservers
+  become: true
+  tasks:
+  - name: install unzip on centos
+    tags: "terraform,unzip"
+    dnf:
+      name: unzip
+      state: latest
+    when: ansible_distribution == 'CentOS'
+
+- hosts: fileservers
+  become: true
+  tasks:
+  - name: Install terraform from zip
+    tags: "terraform,unzip"
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_386.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      mode: 07555
+      owner: root
+      group: root
+    when: ansible_distribution == 'CentOS'
+
+
+
+ansible-playbook --ask-become-pass install-unzip-terraform.yml

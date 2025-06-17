@@ -1,0 +1,174 @@
+Roles is about organising your playbooks into a more organised look and feel. Instead of having on playbook for everything you can break it up.
+The groups in my inventory.ini file will be used to break up the task and playbooks. I will have a additional one call base which will apply to all servers
+
+-base
+-fileservers
+-webservers
+-dbservers
+-workstations
+
+I will create the folders in the main area of ansible /etc/ansible/ which will have a roles folder, the group name, tasks folder and main.yml file
+here is the folder structure
+
+/etc/ansible/roles/fileservers/tasks/main.yml
+/etc/ansible/roles/webservers/tasks/main.yml
+/etc/ansible/roles/dbservers/tasks/main.yml
+/etc/ansible/roles/workstations/tasks/main.yml
+/etc/ansible/roles/base/tasks/main.yml
+
+So my playbook will reference those group it will look like this
+sudo nano everything.yml
+
+---
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: update repo index CentOS
+    tags: always
+    dnf:
+      update_cache: yes
+    changed_when: false
+    when: ansible_distribution == 'CentOS'
+
+  - name: update repo index Ubuntu
+    tags: always
+    apt:
+      update_cache: yes
+    changed_when: false
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: all
+  become: true
+  roles:
+  - base
+
+- hosts: fileservers
+  become: true
+  roles:
+  - fileservers
+
+- hosts: webservers
+  become: true
+  roles:
+  - webservers
+
+- hosts: dbservers
+  become: true
+  roles:
+  - dbservers
+
+- hosts: workstations
+  become: true
+  roles:
+  - workstations
+
+
+Each of the main.yml on each of the groups wont need tasks: so it will start from -name.
+
+your base main.yml will look like this
+
+- name: install updates CentOS
+  tags: always
+  dnf:
+    update_only: yes
+    update_cache: yes
+  when: ansible_distribution == "CentOS"
+
+- name: install updates Ubuntu
+  tags: always
+  apt:
+    upgrade: dist
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: create john user (ansible sudo user)
+  tags: always
+  user:
+     name: john
+     groups: root
+
+- name: add ssh key for john
+  tags: always
+  authorized_key:
+    user: john
+    key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCUJHlwNqf9Jk3kcZjBvHCxWd1/Fyv7RIEFWVw1Ux1v user@cnac.vmware.local"
+
+- name: add sudoers file for john
+  tags: always
+  copy:
+     src: /etc/ansible/files/sudoer_john
+     dest: /etc/sudoers.d/john
+     owner: root
+     group: root
+     mode: 0440
+
+so fileservers main.yml will have this
+
+- name: install samba on Centos
+  tags: samba,fileserver
+  dnf:
+    name: samba
+    state: latest
+  when: ansible_distribution == 'CentOS'
+
+- name: install samba on ubuntu
+  tags: samba,fileserver
+  apt:
+    name: samba
+    state: latest
+  when: ansible_distribution == 'Ubuntu'
+
+so webserver main.yml will have this
+
+ - name: install httpd package (CentOS)
+   tags: apache,centos,httpd
+   dnf:
+     name:
+       - httpd
+       - php
+     state: latest
+   when: ansible_distribution == "CentOS"
+ 
+ - name: start and enable httpd (CentOS)
+   tags: apache,centos,httpd
+   service:
+     name: httpd
+     state: started
+     enabled: yes
+   when: ansible_distribution == "CentOS"
+ 
+ - name: install apache2 package (Ubuntu)
+   tags: apache,apache2,ubuntu
+   apt:
+     name:
+       - apache2
+       - libapache2-mod-php
+     state: latest
+   when: ansible_distribution == "Ubuntu"
+
+
+dbservers main.yml will have this
+
+  - name: install mariadb on ubuntu
+    apt:
+      name: mariadb-server
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: install mariadb on centos
+    dnf:
+      name: mariadb
+      state: latest
+    when: ansible_distribution == 'CentOS'
+
+workstations  main.yml will have this
+
+  - name: install vlc and unzip player
+    package:
+      name: 
+        - vlc
+        - unzip
+      state: latest
+
+ansible-playbook everything.yml

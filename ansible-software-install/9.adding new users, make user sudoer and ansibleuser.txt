@@ -1,0 +1,76 @@
+The purpose of this blog is to add a new user across all the manage nodes, make user sudo, add ansible public key to the user so it can run ansible playbooks.
+
+sudo nano create-new-user.yml
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Create new user
+    tags: always
+    user:
+      name: john
+      group: root
+
+ansible-playbook --ask-become-pass create-new-user.yml
+
+check if worked
+cd /home
+ls
+chage -l john
+
+update create-new-user.yml with the below
+sudo nano create-new-user.yml
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Create new user
+    tags: always
+    user:
+      name: john
+      group: root
+
+  - name: add ssh key for john
+    tags: always
+    authorized_key:
+      user: john
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCUJHlwNqf9Jk3kcZjBvHCxWd1/Fyv7RIEFWVw1Ux1v user@cnac.vmware.local"
+
+  - name: add john to sudoers
+    tags: always
+    copy:
+      src: /etc/ansible/files/sudoer_john
+      dest: /etc/sudoers.d/john
+      owner: root
+      group: root
+      mode: 0440
+
+On control node 
+mkdir /etc/ansible/files
+cd /etc/ansible/files
+sudo nano sudoer_john
+john ALL=(ALL) NOPASSWD:ALL
+
+On managed node
+ls -l /etc/sudoers.d shouldn't have john
+
+ansible-playbook --ask-become-pass create-new-user.yml
+
+On managed node
+ls -l /etc/sudoers.d should have john
+
+
+# No password should be required
+ssh john@ip 
+
+
+modify the ansible.cfg to allow john to be remote users
+sudo nano /etc/ansible/ansible.cfg
+remote_user = john
+private_key_file = ~/.ssh/ansible
+inventory = inventory
+
+the ansible playbook should be able to run as john and wont require --ask-become-pass as john is sudo everywhere
+ansible-playbook create-new-user.yml

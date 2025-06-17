@@ -1,0 +1,26 @@
+Create a playbook with all the initial config for a server
+
+as a example we would want to do the following for our initial builds
+
+- Provision new server
+*install update
+*add ansible user
+*install core apps
+---
+- hosts: all
+  become: true
+  tasks:
+
+  - name: update repository index CentOS
+    tags: always
+    dnf:
+     update_only: yes
+     update_cache: yes
+    when: ansible_distribution == 'CentOS'
+
+  - name: update repository index Ubuntu
+    tags: always
+    apt:
+     upgrade: dist
+     update_cache: yes
+    when: ansible_distribution == 'Ubuntu'

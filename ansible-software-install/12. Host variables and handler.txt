@@ -1,0 +1,79 @@
+Host variables and handler
+host variables can be used to manage host at another level by defining the variable or a name to define what you want it to do. Here I will create a new host_vars folder, create a new yml file with the servers ip address, in this case the variable i will use are for webserver. The handler will allow another yml file to run using the notify option when there is a change.
+
+cd /etc/ansible
+sudo mkdir host_vars
+cd host_vars
+sudo nano dns or ip .yml from inventory.ini file
+example
+sudo nano 192.168.1.128.yml
+apache_package_name: apache2
+apache_service: apache2
+php_package_name: libapache2-mod-php
+#apache_package_name: httpd
+#apache_service: httpd
+#php_package_name: php
+
+
+now I will modify the webserver yml
+cd /etc/ansible/roles/webservers/tasks/
+sudo nano main.yml
+
+ - name: install httpd package (CentOS)
+   tags: apache,centos,httpd
+   dnf:
+     name:
+       - httpd
+       - php
+     state: latest
+   when: ansible_distribution == "CentOS"
+
+ - name: start and enable httpd (CentOS)
+   tags: apache,centos,httpd
+   service:
+     name: httpd
+     state: started
+     enabled: yes
+   when: ansible_distribution == "CentOS"
+
+ - name: install apache2 package (Ubuntu)
+   tags: apache,apache2,ubuntu
+   apt:
+     name:
+       - '{{ apache_package_name }}'
+       - '{{ php_package_name }}'
+     state: latest
+   when: ansible_distribution == "Ubuntu"
+
+ - name: start apache server
+   service:
+     name: '{{ apache_service }}'
+     state: started
+     enabled: yes
+   when: ansible_distribution == 'Ubuntu'
+
+ - name: change line in file
+   lineinfile:
+     path: /etc/ansible/playbooks/testfile.txt
+     regexp: '^4.random5'
+     line: changethisline ok please
+   when: ansible_distribution == 'Ubuntu'
+   notify: restart_apache
+
+
+cd /etc/ansible/roles/webservers/
+mkdir handlers
+cd handlers
+sudo nano main.yml
+
+ - name: restart_apache
+   tags: apache,centos,httpd
+   service:
+     name: '{{ apache_service }}'
+     state: restarted
+
+
+When the change in line occurs in the file the apache service will be restart
+
+ansible-playbook /etc/ansible/playbooks/everything.yml --ask-become-pass
+

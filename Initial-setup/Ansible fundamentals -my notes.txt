@@ -1,0 +1,932 @@
+Ansible fundamentals my notes
+-----------------------------
+Ansible is open source product used for automation installed on a flavour on Linux(in our case here we are using ubuntu).
+docs.ansible.com
+
+Use Cases
+---------------------
+Provision hosts
+Deploy packages
+Running remote commands.
+
+Connection
+-----------------------
+- Openssh is required for remote management of hosts
+- ssh keys are better than passwords as authentication is using a key copied to managed server.
+- A initial connection is required from the control node to the managed node
+"ssh user@ip" answer yes
+- Create ssh key pair on the control node and copy to managed servers this will make the automatic connection without password.
+This is called key management is ansible
+"ssh-keygen" uses default encryption, run from control node.
+"ssh-keygen -t ed25519" uses stronger than the default encryption, run from control node
+"cat .ssh/" default location
+"ssh-copy-id -i ~/.ssh/id_ed25519.pub user@ip" copies the public key from control node to managed node.
+"cat .ssh/authorized_keys" from managed node to see keys from control node
+- After updating ssh key to managed node ensure you test so ssh from control node to managed node ensure not prompted for password
+- You can create a comment on your ssh-keygen process
+"ssh-keygen -t ed25519 -C "ansible"
+
+GitHub
+----------------------------
+- Using GitHub with ansible allows teams to work from one repo location with version control.
+- Install git on your control node
+"which git"
+"sudo apt update"
+"sudo apt install git"
+- GitHub.com
+1. Create an account on GitHub
+2. Create new repository
+public repositories are accessible to everyone on the internet, while private repositories are only accessible to you and those you explicitly grant access too.
+3. Create a new folder and file readme.txt
+4. Enable ssh on your GitHub > click on the icon on the right hand corner or your profile > click settings > go to ssh and gpg keys > 
+add new ssh key > use ansible as the name and copy .pub key from you ansible control node
+5. from your GitHub repository > click <code> > click ssh >Copy url to clipboard
+6. From your control node "git clone url" this will download your repo into the current directory your in
+7. "git config --global user.name "kad"
+8. "git config --global user.email "kad@gmail.com"
+9. If you make changes to something in the repo on the control node, you can use the following command to manage it and push it to GitHub
+"git status" see any changes
+"git diff readme" see the changes on that readme file
+"git add readme" add to repo
+git commit -m "adding readme file to GitHub"
+"git push origin master" if not working use "git push origin HEAD:master"
+website will show changes you will need to commit.
+
+Install ansible
+----------------------------
+default direction installation for ansible is /etc/ansible
+"sudo apt update"
+"sudo apt install ansible"
+
+Install configure ansible - inventory file
+----------------------------
+create inventory file this will have the list of all the hosts you want to manage, dns can be used intead of ips
+"sudo nano inventory"
+172.168.1.50
+172.168.1.51
+172.168.1.52
+When creating the inventory file use your GitHub location then that way it gets saved there.
+
+ansible commands - ping
+----------------------------
+ping all hosts via ssh
+ansible all --key-file ~/.ssh/ansible -i inventory -m ping
+should show you ping results, -m is the module, ping is done via ssh
+
+Install configure ansible - ansible config file
+---------------------------------------------
+"sudo nano ansible.cfg" create in the GitHub location so it can be pushed
+[defaults]
+inventory = inventory
+private_key_file =  ~/.ssh/ansible
+
+"ansible all -m ping" this will use the save config in the ansible.cfg and inventory file
+
+ansible commands - gather_facts & hosts & limit
+----------------------------
+"ansible all --list-hosts"
+"ansible all -m gather_facts" get all hosts details
+"ansible all -m gather_facts --limit 172.168.1.50" files all gather facts to that ip address"
+
+
+sudo for ansible
+----------------------------
+example command
+"ansible all -m apt -a update_cache=true --become --ask-become-pass"
+-m is the module
+apt is the package
+-a is the argument 
+--become is the evaluated permissions
+--ask-become-pass is the sudo password
+
+Install remote package using ansible sudo
+--------------------------------------
+Installing application requires sudo privileges
+"ansible all -m apt -a name=vim-nox --become --ask-become-pass"
+vim-nox is a text editor
+to check if it was installed on the managed node "apt search vim-nox"
+to check the history on managed node 
+cd /var/log
+cd /apt
+cat history.log
+
+installed the latest version (upgrades)
+"ansible all -m apt -a "name=vim-nox state=latest"--become --ask-become-pass"
+"ansible all -m apt -a "upgrade=dist"--become --ask-become-pass" install all updates
+
+playbook example
+--------------------------------------
+sudo nano remove.yml
+
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: remove package
+    apt:
+      name: apache2
+      state: absent
+
+# the above removes apache2, not correctly spacing in your yml file make your playbook fail
+# remove the state if you want it to install
+# state: latest to upgrade
+to run the .yml file
+"ansible-playbook --ask-become-pass remove.yml"
+changed=1 out means it changed something on managed node, changed=0 didn't do anything
+
+you can run multiple tasks
+  tasks:
+
+  - name: update repo
+    apt:
+      update_cache: yes
+
+  - name: install package
+    apt:
+      name: apache2-mod-pnp
+      state: latest
+
+playbook example for different operating systems "when"
+--------------------------------------
+"git pull" gets changes if working on ansible in a team
+different operating systems have different commands such as installing apt, yum, dnf
+when creating your yml file you can use ansible_distribution this will allow you to point the task to the correct operating system
+
+example
+---
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: update repo
+    apt:
+      update_cache: yes
+    when: ansible_distribtion == 'Ubuntu'
+
+# running the same command for multiple operating systems
+    when ansible_distribtion in ["Ubuntu", "Debian"]
+# You can use gather_details to use other examples of when conditions
+"ansible all -m gather_facts --limit 172.168.1.50 | grep ansible_distribtion"
+example
+when: ansible_distribtion_version == '8.2'
+
+# so at the end your yml can include ubuntu and centos commands even if different
+  - name: update repo
+    dnf:
+      update_cache: yes
+    when: ansible_distribtion == 'CentOS'
+
+  - name: update repo
+    apt:
+      update_cache: yes
+    when: ansible_distribtion == 'Ubuntu'
+
+-------------------------------
+making playbooks easier to understand and consolidation
+
+Instead of having multiple tasks for installing software you can put them under one task for example
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: install vlc and apache2 Ubuntu
+    apt:
+      name:
+        - vlc
+        - apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+The benefits of this it runs faster and easier to read the playbook
+
+You can also use variables in playbooks so an example of this would be
+
+# instead of apt which is for ubuntu or dnf which is for centos you can use package which can run on what ever the operating system uses
+# You playbook will look like this
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: install apache2 Ubuntu and httpd centos
+    package:
+      name:
+        - "{{ apache_package }}"
+
+
+# you will need to update your inventory.ini file to look like the below example as apache2 doesn't exist for centos it is httpd
+
+192.168.1.151 apache_package=httpd
+#Ubuntu
+192.168.1.130 apache_package=apache2
+
+
+---------------------
+Group up server types "targeting groups"
+
+So you can group server type in the inventory.ini file and use the same playbook to specify the group type
+inventory.ini	
+[webservers]
+172.168.1.50
+[dbservers]
+172.168.1.51
+[fileservers]
+172.168.1.51
+
+your playbook will looks like this as a example
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: install apache2 on Ubuntu
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: fileservers
+  become: true
+  tasks:
+  - name: install samba on Centos
+    dnf:
+      name: samba
+      state: latest
+    when: ansible_distribution == 'CentOS'
+
+
+You can use package here for Samba as it has the same installer name for centos and ubuntu
+- hosts: all
+  become: true
+  tasks:
+  - name: install samba on Centos and ubuntu
+    Package:
+      name: samba
+      state: latest
+Other thing here is to mention you can use pre_tasks: instead of tasks:  this will ensure that all pre_tasks are run first
+---------------------
+tagging
+What you can do we tags is tag section in the play book by giving it a name and then running the playbook with --tags. tags can be named anything
+
+Below is a example
+
+sudo nano tags-install.yml
+
+
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: install apache2 on Ubuntu
+    tags: always
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: fileservers
+  become: true
+  tasks:
+  - name: install samba on Centos
+    tags: samba,fileserver
+    dnf:
+      name: samba
+      state: latest
+    when: ansible_distribution == 'CentOS'
+
+- hosts: dbservers
+  become: true
+  tasks:
+  - name: install vlc and apache2 Ubuntu
+    apt:
+      name:
+        - vlc
+        - apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+inventory.ini
+[fileservers]
+#centos
+192.168.1.151
+#Ubuntu
+[webservers]
+#ubuntu
+192.168.1.128
+[dbservers]
+#ubuntu
+192.168.1.130
+[workstations]
+#centos
+192.168.1.150
+
+Here we have three examples in one tag: always means it will always run, samba and fileserver tags either can be used or both, last one doesn't have tag so it will be skipped if I use a tag in my playbook command.
+
+ansible-playbook --list-tags tags-install.yml
+ansible-playbook --tags fileserver tags-install.yml --ask-become-pass
+ansible-playbook --tags "fileserver,samba" tags-install.yml --ask-become-pass
+
+sudo apt list --installed | grep apache2
+sudo dnf list --installed | grep samba
+
+-----------------------
+Manage files
+Copying files to server..
+sudo mkdir webfiles
+sudo nano default-site.html
+
+<html>
+	<title> ansible website </title>
+	<body><p>Ansible is a great automation tool</p></body>
+</html>
+
+This sections I am going to replace a file on the destination end I will replace the index.html on a ubuntu apache2 which is the front end webpage with my own one.
+I will create the file on the ansible control node and create a playbook to copy the file.
+
+sudo nano copyfiles.yml
+
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: install apache2 on Ubuntu
+    tags: webserver
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: webservers
+  become: true
+  tasks:
+  - name: copy file to webserver
+    tags: webserver
+    copy:
+      src: /etc/ansible/webfiles/default-site.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode: 0644
+    when: ansible_distribution == 'Ubuntu'
+
+
+file gets renamed when copied to index.html
+
+ansible-playbook --ask-become-pass copyfiles.yml
+
+------------------------------
+unzip to dest
+Here we will install unzip, get a zip file from a URL and unzip and install at the destination location.
+
+https://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz
+https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_386.zip
+
+sudo nano install-unzip-terraform.yml
+
+---
+- hosts: fileservers
+  become: true
+  tasks:
+  - name: install unzip on centos
+    tags: "terraform,unzip"
+    dnf:
+      name: unzip
+      state: latest
+    when: ansible_distribution == 'CentOS'
+
+- hosts: fileservers
+  become: true
+  tasks:
+
+  - name: Install terraform from zip
+    tags: "terraform,unzip"
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/1.12.2/terraform_1.12.2_linux_386.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      mode: 07555
+      owner: root
+      group: root
+    when: ansible_distribution == 'CentOS'
+
+
+
+ansible-playbook --ask-become-pass install-unzip-terraform.yml
+
+--------------------
+Working with services
+You can start, restart and enable services
+
+sudo nano install-apache2-StopService.yml
+
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: install apache2
+    tags: apache2
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: webservers
+  become: true
+  tasks:
+  - name: stop apache2 service
+    tags: apache2
+    service:
+      name: apache2
+      state: stopped
+      enabled: yes
+    when: ansible_distribution == 'Ubuntu'
+
+ansible-playbook --ask-become-pass install-apache2-StopService.yml
+
+sudo systemctl status apache2	
+
+now start the service
+
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: install apache2
+    tags: apache2
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: webservers
+  become: true
+  tasks:
+  - name: stop apache2 service
+    tags: "apache2,start"
+    service:
+      name: apache2
+      state: started
+      enabled: yes
+    when: ansible_distribution == 'Ubuntu'
+
+ansible-playbook --tags "apache2,start" --ask-become-pass install-apache2-StopService.yml
+
+started
+stopped
+restarted
+
+------------------------------------
+changing line in a file
+
+On managed node create the following folder and file structure 
+cd /etc/ansible/playbooks
+sudo nano testfile.txt
+1.random1
+2.random2
+3.random3
+4.random5
+5.random6
+
+sudo nano ChangeLineInFile.yml
+
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: change line in file
+    lineinfile:
+      path: /etc/ansible/playbooks/testfile.txt
+      regexp: '^4.random5'
+      line: changethisline ok
+    when: ansible_distribution == 'Ubuntu'
+
+ansible-playbook --ask-become-pass ChangeLineInFile.yml
+
+---------------------------------------------
+The purpose of this blog is to add a new user across all the manage nodes, make user sudo, add ansible public key to the user so it can run ansible playbooks.
+
+sudo nano create-new-user.yml
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Create new user
+    tags: always
+    user:
+      name: john
+      group: root
+
+ansible-playbook --ask-become-pass create-new-user.yml
+
+check if worked
+cd /home
+ls
+chage -l john
+
+update create-new-user.yml with the below
+sudo nano create-new-user.yml
+
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: Create new user
+    tags: always
+    user:
+      name: john
+      group: root
+
+  - name: add ssh key for john
+    tags: always
+    authorized_key:
+      user: john
+      key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCUJHlwNqf9Jk3kcZjBvHCxWd1/Fyv7RIEFWVw1Ux1v user@cnac.vmware.local"
+
+  - name: add john to sudoers
+    tags: always
+    copy:
+      src: /etc/ansible/files/sudoer_john
+      dest: /etc/sudoers.d/john
+      owner: root
+      group: root
+      mode: 0440
+
+On control node 
+mkdir /etc/ansible/files
+cd /etc/ansible/files
+sudo nano sudoer_john
+john ALL=(ALL) NOPASSWD:ALL
+
+On managed node
+ls -l /etc/sudoers.d shouldn't have john
+
+ansible-playbook --ask-become-pass create-new-user.yml
+
+On managed node
+ls -l /etc/sudoers.d should have john
+
+
+# No password should be required
+ssh john@ip 
+
+
+modify the ansible.cfg to allow john to be remote users
+sudo nano /etc/ansible/ansible.cfg
+remote_user = john
+private_key_file = ~/.ssh/ansible
+inventory = inventory
+
+the ansible playbook should be able to run as john and wont require --ask-become-pass as john is sudo everywhere
+ansible-playbook create-new-user.yml
+----------------
+Create a playbook with all the intial config for a server
+
+---Provisioning a server
+*install update
+*add ansible user
+*install core apps
+
+---
+- hosts: all
+  become: true
+  tasks:
+
+  - name: update repository index CentOS
+    tags: always
+    dnf:
+     update_only: yes
+     update_cache: yes
+    when: ansible_distribution == 'CentOS'
+
+  - name: update repository index Ubuntu
+    tags: always
+    apt:
+     upgrade: dist
+     update_cache: yes
+    when: ansible_distribution == 'Ubuntu'
+
+
+
+-------------------------------------------
+Roles is about organising your playbooks into a more organised look and feel. Instead of having on playbook for everything you can break it up.
+The groups in my inventory.ini file will be used to break up the task and playbooks. I will have a additional one call base which will apply to all servers
+
+-base
+-fileservers
+-webservers
+-dbservers
+-workstations
+
+I will create the folders in the main area of ansible /etc/ansible/ which will have a roles folder, the group name, tasks folder and main.yml file
+here is the folder structure
+
+/etc/ansible/roles/fileservers/tasks/main.yml
+/etc/ansible/roles/webservers/tasks/main.yml
+/etc/ansible/roles/dbservers/tasks/main.yml
+/etc/ansible/roles/workstations/tasks/main.yml
+/etc/ansible/roles/base/tasks/main.yml
+
+So my playbook will reference those group it will look like this
+sudo nano everything.yml
+
+---
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: update repo index CentOS
+    tags: always
+    dnf:
+      update_cache: yes
+    changed_when: false
+    when: ansible_distribution == 'CentOS'
+
+  - name: update repo index Ubuntu
+    tags: always
+    apt:
+      update_cache: yes
+    changed_when: false
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: all
+  become: true
+  roles:
+  - base
+
+- hosts: fileservers
+  become: true
+  roles:
+  - fileservers
+
+- hosts: webservers
+  become: true
+  roles:
+  - webservers
+
+- hosts: dbservers
+  become: true
+  roles:
+  - dbservers
+
+- hosts: workstations
+  become: true
+  roles:
+  - workstations
+
+
+Each of the main.yml on each of the groups wont need tasks: so it will start from -name.
+
+your base main.yml will look like this
+
+- name: install updates CentOS
+  tags: always
+  dnf:
+    update_only: yes
+    update_cache: yes
+  when: ansible_distribution == "CentOS"
+
+- name: install updates Ubuntu
+  tags: always
+  apt:
+    upgrade: dist
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: create john user (ansible sudo user)
+  tags: always
+  user:
+     name: john
+     groups: root
+
+- name: add ssh key for john
+  tags: always
+  authorized_key:
+    user: john
+    key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCUJHlwNqf9Jk3kcZjBvHCxWd1/Fyv7RIEFWVw1Ux1v user@cnac.vmware.local"
+
+- name: add sudoers file for john
+  tags: always
+  copy:
+     src: /etc/ansible/files/sudoer_john
+     dest: /etc/sudoers.d/john
+     owner: root
+     group: root
+     mode: 0440
+
+so fileservers main.yml will have this
+
+- name: install samba on Centos
+  tags: samba,fileserver
+  dnf:
+    name: samba
+    state: latest
+  when: ansible_distribution == 'CentOS'
+
+- name: install samba on ubuntu
+  tags: samba,fileserver
+  apt:
+    name: samba
+    state: latest
+  when: ansible_distribution == 'Ubuntu'
+
+so webserver main.yml will have this
+
+ - name: install httpd package (CentOS)
+   tags: apache,centos,httpd
+   dnf:
+     name:
+       - httpd
+       - php
+     state: latest
+   when: ansible_distribution == "CentOS"
+ 
+ - name: start and enable httpd (CentOS)
+   tags: apache,centos,httpd
+   service:
+     name: httpd
+     state: started
+     enabled: yes
+   when: ansible_distribution == "CentOS"
+ 
+ - name: install apache2 package (Ubuntu)
+   tags: apache,apache2,ubuntu
+   apt:
+     name:
+       - apache2
+       - libapache2-mod-php
+     state: latest
+   when: ansible_distribution == "Ubuntu"
+
+
+dbservers main.yml will have this
+
+  - name: install mariadb on ubuntu
+    apt:
+      name: mariadb-server
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: install mariadb on centos
+    dnf:
+      name: mariadb
+      state: latest
+    when: ansible_distribution == 'CentOS'
+
+workstations  main.yml will have this
+
+  - name: install vlc and unzip player
+    package:
+      name: 
+        - vlc
+        - unzip
+      state: latest
+
+ansible-playbook everything.yml
+
+--------------------------
+Host variables and handler
+host variables can be used to manage host at another level by defining the variable or a name to define what you want it to do. Here I will create a new host_vars folder, create a new yml file with the servers ip address, in this case the variable i will use are for webserver. The handler will allow another yml file to run using the notify option when there is a change.
+
+cd /etc/ansible
+sudo mkdir host_vars
+cd host_vars
+sudo nano dns or ip .yml from inventory.ini file
+example
+sudo nano 192.168.1.128.yml
+apache_package_name: apache2
+apache_service: apache2
+php_package_name: libapache2-mod-php
+#apache_package_name: httpd
+#apache_service: httpd
+#php_package_name: php
+
+
+now I will modify the webserver yml
+cd /etc/ansible/roles/webservers/tasks/
+sudo nano main.yml
+
+ - name: install httpd package (CentOS)
+   tags: apache,centos,httpd
+   dnf:
+     name:
+       - httpd
+       - php
+     state: latest
+   when: ansible_distribution == "CentOS"
+
+ - name: start and enable httpd (CentOS)
+   tags: apache,centos,httpd
+   service:
+     name: httpd
+     state: started
+     enabled: yes
+   when: ansible_distribution == "CentOS"
+
+ - name: install apache2 package (Ubuntu)
+   tags: apache,apache2,ubuntu
+   apt:
+     name:
+       - '{{ apache_package_name }}'
+       - '{{ php_package_name }}'
+     state: latest
+   when: ansible_distribution == "Ubuntu"
+
+ - name: start apache server
+   service:
+     name: '{{ apache_service }}'
+     state: started
+     enabled: yes
+   when: ansible_distribution == 'Ubuntu'
+
+ - name: change line in file
+   lineinfile:
+     path: /etc/ansible/playbooks/testfile.txt
+     regexp: '^4.random5'
+     line: changethisline ok please
+   when: ansible_distribution == 'Ubuntu'
+   notify: restart_apache
+
+
+cd /etc/ansible/roles/webservers/
+mkdir handlers
+cd handlers
+sudo nano main.yml
+
+ - name: restart_apache
+   tags: apache,centos,httpd
+   service:
+     name: '{{ apache_service }}'
+     state: restarted
+
+
+When the change in line occurs in the file the apache service will be restart
+
+ansible-playbook /etc/ansible/playbooks/everything.yml --ask-become-pass
+
+------------------------------
+Templates - I will be creating a template from the sshd_config file basically a copy of it that will be used to deploy to other manage nodes. 
+Just remember different operating systems may have different options in the sshd config file. The template format is j2 for Jinja2 is a commonly used templating engine
+
+First create the template folder in the base directory
+cd /etc/ansible/roles/base/
+sudo mkdir templates
+
+Next lets copy the sshd_config and name it as .j2
+
+sudo cp /etc/ssh/sshd_config /etc/ansible/roles/base/templates/sshd_config_centos.j2
+
+modify the j2 file
+sudo nano /etc/ansible/roles/base/templates/sshd_config_centos.j2
+
+AllowUsers {{ ssh_users}}
+
+cd /etc/ansible/roles/base/templates
+sudo chmod -R 777 sshd_config_centos.j2
+
+
+
+now I will create a IP.yml files for each of my centos boxes in the host_vars
+192.168.1.150
+192.168.1.151 
+
+ ssh_users: "john"
+ ssh_template_file: sshd_config_centos.j2
+
+now lets modify base main.yml
+sudo nano /etc/ansible/roles/base/tasks/main.yml
+
+
+- name: openssh generate sshd_config file from template
+  tags: ssh
+  template:
+     src: "{{ ssh_template_file }}"
+     dest: /etc/ssh/sshd_config
+     owner: root
+     group: root
+     mode: 0644
+  notify: restart_sshd
+
+
+now create the handlers directory so when there is a change in the sshd_config file the sshd service gets restarted
+
+cd /etc/ansible/roles/base
+mkdir handlers
+cd handlers
+sudo nano main.yml
+
+ - name: restart_sshd
+   service:
+     name: sshd
+     state: restarted
+
+ansible-playbook /etc/ansible/playbooks/everything.yml --ask-become-pass
+see if the AllowUsers john is added to the dest managed hosts in the sshd file /etc/ssh/sshd_config
+
+sudo cat /etc/ssh/sshd_config | grep AllowUsers
+
+
+

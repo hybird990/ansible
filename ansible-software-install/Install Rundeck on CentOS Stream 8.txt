@@ -1,0 +1,36 @@
+Install rundeck on CentOS Stream 8 
+
+You use Rundeck to execute workflows across your existing automation like Ansible, Puppet, API script etc..
+Rundeck is free open source software and it has GUI you can use and can provide a self-service page.
+
+Below is the install steps on took to install it, I had some troubles on centos 10 but centos 8 seem to work.
+
+su
+sudo yum install ansible
+curl https://raw.githubusercontent.com/rundeck/packaging/main/scripts/rpm-setup.sh 2> /dev/null | bash -s rundeck
+java -version
+sudo yum install java-11-openjdk
+sudo yum install rundeck
+sudo systemctl start rundeckd
+sudo systemctl enable rundeckd
+systemctl stop rundeckd
+cd /etc/rundeck
+
+sudo nano rundeck-config.properties
+update the following with your dns or ip
+grails.serverURL=http://192.168.1.140:4440
+
+sudo nano framework.properties
+update the following with your dns or ip
+framework.server.name = 192.168.1.140
+framework.server.hostname = 192.168.1.140
+framework.server.url = http://192.168.1.140:4440
+
+sudo firewall-cmd --permanent --zone=public --add-port=4440/tcp
+sudo firewall-cmd --reload
+systemctl restart rundeckd
+
+login details
+url: http://192.168.1.141:4440/
+username: admin
+password: admin

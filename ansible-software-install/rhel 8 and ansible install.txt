@@ -1,0 +1,88 @@
+install ansible
+----------------------------
+sudo su -
+cat /etc/redhat-release
+yum repolist all | grep ansible
+yum install yum-utils
+yum-config-manager --enable ansible-2.9-for-rhel-8-x86_64-rpms 
+yum repolist enabled
+yum install -y ansible
+ansible --version
+
+setup user on control node and all managed nodes
+-------------------------------------------
+#on control and manage nodes
+useradd -m ansible
+passwd ansible
+echo "ansible ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+generate ssh pair on control node and copy to manage node
+----------------------------------------------
+#on control node
+login as ansible user
+# enter the defaults
+ssh-keygen
+# from the control node to each managed node copy ssh key
+ssh-copy-id ansible@192.168.1.151
+ssh-copy-id ansible@192.168.1.130
+#no password required - testing
+ssh ansible@192.168.1.151
+ssh ansible@192.168.1.130
+
+create home structure and configure ansible
+-----------------------------------------------
+mkdir /home/ansible/plays
+cd /home/ansible/plays
+sudo nano myhosts
+
+[fileservers]
+192.168.1.151
+[webservers]
+192.168.1.130
+
+cd /home/ansible/plays
+sudo nano ansible.cfg
+
+[defaults]
+ansible_python_interpreter = /usr/bin/python3
+inventory = myhosts
+remote_user = ansible
+host_key_checking = false
+
+[privilege_escalation]
+become = true
+become_method = sudo
+become_user = root
+bacome_ack_pass = false
+
+check if directory changed 
+ansible --version 
+
+[ansible@rhel8-awx plays]$ ansible --version
+ansible 2.9.27
+config file = /home/ansible/plays/ansible.cfg
+
+# need to install ansible again because python3 and ansible was not working together
+sudo yum -y install ansible-core --allowerasing
+
+[ansible@rhel8-awx plays]$ ansible --version
+ansible [core 2.16.3]
+  config file = /home/ansible/plays/ansible.cfg
+
+#first playbook
+sudo nano first-play-book.yml
+---
+- name: first play
+  hosts: all
+  tasks:
+   - name: create a new file
+     file:
+      path: /tmp/wow.conf
+      mode: 0664
+      owner: ansible
+      state: touch
+
+# ensure you add the ansible user in the ssh config on the managed nodes
+
+sudo nano /etc/ssh/sshd_config
+AllowUsers ansible

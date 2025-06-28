@@ -4,6 +4,6 @@ vcenter_datacenter: "dc1"
 vcenter_validate_certs: false
 vcenter_username: "administrator@vsphere.local"
 vcenter_password: "VMware1!"
-- vm_name: "WIN2012-TEST1"
+vm_name: "WIN2012-TEST1"
 vm_template: "ansible-template"
 vm_folder: "ansible"

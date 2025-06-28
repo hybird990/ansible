@@ -1,0 +1,26 @@
+#changing line in a file
+#
+#On managed node create the following folder and file structure 
+#cd /etc/ansible/playbooks
+#sudo nano testfile.txt
+#1.random1
+#2.random2
+#3.random3
+#4.random5
+#5.random6
+#
+#sudo nano ChangeLineInFile.yml
+#
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: change line in file
+    lineinfile:
+      path: /etc/ansible/playbooks/testfile.txt
+      regexp: '^4.random5'
+      line: changethisline ok
+    when: ansible_distribution == 'Ubuntu'
+#
+#
+#ansible-playbook --ask-become-pass ChangeLineInFile.yml

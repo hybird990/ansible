@@ -102,7 +102,7 @@ kubectl logs -f deployments/awx-operator-controller-manager -c awx-manager
 
 kubectl get secret awx-demo-admin-password -o jsonpath="{.data.password}" | base64 --decode
 
-admn
+admin
 7ksyioHHLN81lCcTD5Mw4sLM2QRYAFko
 
 
@@ -119,3 +119,47 @@ kubectl port-forward svc/awx-demo-service --address 0.0.0.0 31592:80
 #open that port in a web browser
 
 sudo systemctl disable --now firewalld
+
+
+#Add a new manual source for awx - new project 
+/var/lib/awx/projects
+-----------------------------
+docker ps #get name
+docker exec -it minikube bash
+
+    1  pwd
+    2  cd /var/lib/awx
+    3  pwd
+    4  ls
+    5  cd /var/
+    6  ls
+    7  cd lib/
+    8  ls
+    9  mkdir awx
+   10  cd awx/
+   11  ls
+   12  mkdir projects
+   13  cd projects/
+   14  ls
+   15  mkdir vcenter-playbooks
+   16  cd vcenter-playbooks/
+   17  ls
+   18  history
+   19  sudo nano vcenter_vars.yml
+   20  nano vcenter_vars.yml
+   21  vi vcenter_vars.yml
+
+
+#awx process in gui
+----------------------------
+create org first
+create team associate with org
+create user associate with org and team
+add creds under resource cred type VMware vcenter org duck - sso administrator@vsphere.local
+add cred GitHub oersonal access token - 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
+add creds under source control - git hub account
+add inventory - vcenter associate to org
+associate inventory with sources  VMware vcenter- 192.168.1.13, associate with sso
+create project VMware, add org, git,
+use public git address http https://github.com/hybird990/ansible.git
+create a new template for job and select playbook

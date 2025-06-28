@@ -1,0 +1,59 @@
+#Templates - I will be creating a template from the sshd_config file basically a copy of it that will be used to deploy to other manage nodes. 
+#Just remember different operating systems may have different options in the sshd config file. The template format is j2 for Jinja2 is a commonly used templating engine
+#
+#First create the template folder in the base directory
+#cd /etc/ansible/roles/base/
+#sudo mkdir templates
+#
+#Next lets copy the sshd_config and name it as .j2
+#
+#sudo cp /etc/ssh/sshd_config /etc/ansible/roles/base/templates/sshd_config_centos.j2
+#
+#modify the j2 file
+#sudo nano /etc/ansible/roles/base/templates/sshd_config_centos.j2
+#
+#AllowUsers {{ ssh_users}}
+#
+#cd /etc/ansible/roles/base/templates
+#sudo chmod -R 777 sshd_config_centos.j2
+#
+#
+#
+#now I will create a IP.yml files for each of my centos boxes in the host_vars
+#192.168.1.150
+#192.168.1.151 
+#
+# ssh_users: "john"
+# ssh_template_file: sshd_config_centos.j2
+#
+#now lets modify base main.yml
+#sudo nano /etc/ansible/roles/base/tasks/main.yml
+#
+#
+- name: openssh generate sshd_config file from template
+  tags: ssh
+  template:
+     src: "{{ ssh_template_file }}"
+     dest: /etc/ssh/sshd_config
+     owner: root
+     group: root
+     mode: 0644
+  notify: restart_sshd
+#
+#
+#now create the handlers directory so when there is a change in the sshd_config file the sshd service gets restarted
+#
+#cd /etc/ansible/roles/base
+#mkdir handlers
+#cd handlers
+#sudo nano main.yml
+#
+# - name: restart_sshd
+#   service:
+#     name: sshd
+#     state: restarted
+#
+#ansible-playbook /etc/ansible/playbooks/everything.yml --ask-become-pass
+#see if the AllowUsers john is added to the dest managed hosts in the sshd file /etc/ssh/sshd_config
+#
+#sudo cat /etc/ssh/sshd_config | grep AllowUsers

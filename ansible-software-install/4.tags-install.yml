@@ -1,0 +1,66 @@
+#sudo nano tags-install.yml
+---
+- hosts: webservers
+  become: true
+  tasks:
+  - name: install apache2 on Ubuntu
+    tags: always
+    apt:
+      name: apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+- hosts: fileservers
+  become: true
+  tasks:
+  - name: install samba on Centos
+    tags: samba,fileserver
+    dnf:
+      name: samba
+      state: latest
+    when: ansible_distribution == 'CentOS'
+
+- hosts: dbservers
+  become: true
+  tasks:
+  - name: install vlc and apache2 Ubuntu
+    apt:
+      name:
+        - vlc
+        - apache2
+      state: latest
+    when: ansible_distribution == 'Ubuntu'
+
+#inventory.ini file
+#[fileservers]
+#centos
+#192.168.1.151
+#Ubuntu
+#[webservers]
+#ubuntu
+#192.168.1.128
+#[dbservers]
+#ubuntu
+#192.168.1.130
+#[workstations]
+#centos
+#192.168.1.150
+
+#ansible-playbook --list-tags tags-install.yml
+#ansible-playbook --tags fileserver tags-install.yml --ask-become-pass
+#ansible-playbook --tags "fileserver,samba" tags-install.yml --ask-become-pass
+
+#sudo dnf remove httpd
+#sudo dnf remove samba
+#sudo dnf remove vlc
+
+#sudo apt remove samba
+#sudo apt remove apache2
+#sudo apt remove apache
+#sudo apt remove vlc
+
+#sudo apt list --installed | grep vlc
+#sudo dnf list --installed | grep vlc
+
+#sudo apt list --installed | grep apache2
+#sudo dnf list --installed | grep samba

@@ -1,5 +1,4 @@
-sudo nano install-multiple-apps-ubuntu.yml
-
+# sudo nano install-multiple-apps-ubuntu.yml
 ---
 - hosts: all
   become: true
@@ -11,9 +10,6 @@ sudo nano install-multiple-apps-ubuntu.yml
         - apache2
       state: latest
     when: ansible_distribution == 'Ubuntu'
-
-
-
-ansible-playbook --ask-become-pass install-multiple-apps-ubuntu.yml
+# ansible-playbook --ask-become-pass install-multiple-apps-ubuntu.yml
 
 

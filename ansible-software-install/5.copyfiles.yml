@@ -1,14 +1,10 @@
-sudo mkdir webfiles
-sudo nano default-site.html
-<html>
-        <title> ansible website </title>
-        <body><p>Ansible is a great automation tool</p></body>
-</html>
-
-
-
-sudo nano copyfiles.yml
-
+#sudo mkdir webfiles
+#sudo nano default-site.html
+#<html>
+#        <title> ansible website </title>
+#        <body><p>Ansible is a great automation tool</p></body>
+#</html>
+#sudo nano copyfiles.yml
 ---
 - hosts: webservers
   become: true
@@ -32,5 +28,4 @@ sudo nano copyfiles.yml
       group: root
       mode: 0644
     when: ansible_distribution == 'Ubuntu'
-
-ansible-playbook --ask-become-pass copyfiles.yml
+#ansible-playbook --ask-become-pass copyfiles.yml

@@ -1,5 +1,4 @@
-sudo nano using-variables.yml
-
+#sudo nano using-variables.yml
 ---
 - hosts: all
   become: true
@@ -8,12 +7,9 @@ sudo nano using-variables.yml
     package:
       name:
         - "{{ apache_package }}"
-
-sudo nano inventory.ini
-
+#sudo nano inventory.ini
 #centos
-192.168.1.151 apache_package=httpd
+#192.168.1.151 apache_package=httpd
 #Ubuntu
-192.168.1.130 apache_package=apache2
-
-ansible-playbook --ask-become-pass using-variables.yml
+#192.168.1.130 apache_package=apache2
+#ansible-playbook --ask-become-pass using-variables.yml

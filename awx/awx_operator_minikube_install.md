@@ -103,7 +103,6 @@ kubectl logs -f deployments/awx-operator-controller-manager -c awx-manager
 kubectl get secret awx-demo-admin-password -o jsonpath="{.data.password}" | base64 --decode
 
 admin
-7ksyioHHLN81lCcTD5Mw4sLM2QRYAFko
 
 
 #Look for the port awx-demo-service is using
@@ -156,7 +155,7 @@ create org first
 create team associate with org
 create user associate with org and team
 add creds under resource cred type VMware vcenter org duck - sso administrator@vsphere.local
-add cred GitHub oersonal access token - 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
+add cred GitHub oersonal access token 
 add creds under source control - git hub account
 add inventory - vcenter associate to org
 associate inventory with sources  VMware vcenter- 192.168.1.13, associate with sso

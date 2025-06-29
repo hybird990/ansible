@@ -18,6 +18,7 @@
 #        username: "{{ vcenter_username }}"  # Replace with your vCenter username
 #        password: "{{ vcenter_password }}"  # Replace with your vCenter password
 #        datacenter: "{{ datacenter_name }}"  # Replace with your datacenter name
+        datacenter: "sfo-m01-dc01"  # Replace with your datacenter name
         vm_id: "{{ item.guest_id }}"
         snapshot_name: "All Snapshots"  # Use a special name for deleting all
         state: absent

@@ -1,0 +1,26 @@
+---
+- name: Delete all snapshots on VMs in a vCenter datacenter
+  hosts: 10.0.0.12
+  gather_facts: no
+  tasks:
+    - name: Get all VMs
+      community.vmware.vmware_guest_info:
+#        hostname: "{{ vcenter_hostname }}"  # Replace with your vCenter hostname or IP
+#        username: "{{ vcenter_username }}"  # Replace with your vCenter username
+#        password: "{{ vcenter_password }}"  # Replace with your vCenter password
+#        datacenter: "{{ datacenter_name }}"  # Replace with your datacenter name
+        datacenter: "sfo-m01-dc01"  # Replace with your datacenter name
+      register: vm_info
+
+    - name: Delete all snapshots for each VM
+      community.vmware.vmware_guest_snapshot:
+#        hostname: "{{ vcenter_hostname }}"  # Replace with your vCenter hostname or IP
+#        username: "{{ vcenter_username }}"  # Replace with your vCenter username
+#        password: "{{ vcenter_password }}"  # Replace with your vCenter password
+#        datacenter: "{{ datacenter_name }}"  # Replace with your datacenter name
+        vm_id: "{{ item.guest_id }}"
+        snapshot_name: "All Snapshots"  # Use a special name for deleting all
+        state: absent
+        remove_children: yes
+      loop: "{{ vm_info.virtual_machines }}"
+      when: item.snapshots | length > 0

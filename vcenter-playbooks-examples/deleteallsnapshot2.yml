@@ -1,6 +1,6 @@
 ---
 - name: Delete all snapshots on VMs in a vCenter datacenter
-  hosts: 10.0.0.12
+  hosts: localhost
   gather_facts: no
   tasks:
     - name: Get all VMs

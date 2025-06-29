@@ -7,7 +7,7 @@
 #    - include_vars: vars.yml
   tasks:
     - name: Remove all snapshots for a VM
-      community.vmware.vmware_guest_snapshot:
+      vmware_guest_snapshot:
 #        hostname: "{{ vcenter_hostname }}"
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"

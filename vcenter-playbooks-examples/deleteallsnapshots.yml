@@ -12,7 +12,7 @@
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"
 #        datacenter: "{{ datacenter }}"
-        vm_id: "{{ vm_id }}"
+#        vm_id: "{{ vm_id }}"
         state: absent
     # snapshot_name: "{{ snapshot_name }}" # Leave this out to remove all
       delegate_to: localhost

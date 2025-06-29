@@ -12,6 +12,7 @@
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"
 #        datacenter: "{{ datacenter }}"
+        datacenter: sfo-m01-dc01
 #        vm_id: "{{ vm_id }}"
         state: absent
     # snapshot_name: "{{ snapshot_name }}" # Leave this out to remove all

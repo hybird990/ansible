@@ -17,6 +17,6 @@
         name: all
 #        vm_id: "{{ vm_id }}"
         state: absent
-        remove_all: true
+        remove_children: true
     # snapshot_name: "{{ snapshot_name }}" # Leave this out to remove all
       delegate_to: localhost

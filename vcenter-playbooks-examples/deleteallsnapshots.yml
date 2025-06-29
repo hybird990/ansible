@@ -13,6 +13,7 @@
 #        password: "{{ vcenter_password }}"
 #        datacenter: "{{ datacenter }}"
         datacenter: sfo-m01-dc01
+        name: all
 #        vm_id: "{{ vm_id }}"
         state: absent
         remove_all: true

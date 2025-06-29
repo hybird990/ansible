@@ -8,9 +8,9 @@
   tasks:
     - name: Remove all snapshots for a VM
       community.vmware.vmware_guest_snapshot:
-        hostname: "{{ vcenter_hostname }}"
-        username: "{{ vcenter_username }}"
-        password: "{{ vcenter_password }}"
+#        hostname: "{{ vcenter_hostname }}"
+#        username: "{{ vcenter_username }}"
+#        password: "{{ vcenter_password }}"
         datacenter: "{{ datacenter }}"
         vm_id: "{{ vm_id }}"
         state: absent

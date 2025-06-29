@@ -14,7 +14,7 @@
 #        datacenter: "{{ datacenter }}"
         datacenter: sfo-m01-dc01
         folder: /
-        name: all
+#        name: all
 #        vm_id: "{{ vm_id }}"
         state: absent
         remove_children: true

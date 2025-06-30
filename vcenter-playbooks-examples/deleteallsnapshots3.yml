@@ -1,41 +1,55 @@
----
-- name: Delete VMware snapshots older than 7 days
-  hosts: your_vcenter_host  # Replace with your vCenter host or group
+- name: Delete VMware snapshots older than 7 days for all VMs
+  hosts: localhost
   gather_facts: false
+#  vars:
+#    vcenter_hostname: "your-vcenter-host"
+#    vcenter_username: "your-username"
+#    vcenter_password: "your-password"
+    datacenter_name: "sfo-m01-dc01"
+
   tasks:
-    - name: Get all snapshots
-      community.vmware.vmware_guest_snapshot:
-#        hostname: "{{ vcenter_hostname }}"  # Replace with your vCenter hostname
-#        username: "{{ vcenter_username }}"  # Replace with your vCenter username
-#        password: "{{ vcenter_password }}"  # Replace with your vCenter password
-        datacenter: "{{ datacenter_name }}"  # Replace with your datacenter name
-        name: "{{ vm_name }}"  # Replace with your VM name
-        validate_certs: no  # Set to yes if you have valid certificates
-        state: present  # Ensure snapshots are retrieved
-      register: snapshot_info
+    - name: Get list of all virtual machines
+      community.vmware.vmware_vm_info:
+#        hostname: "{{ vcenter_hostname }}"
+#        username: "{{ vcenter_username }}"
+#        password: "{{ vcenter_password }}"
+        datacenter: "sfo-m01-dc01"
+        validate_certs: no
+      register: vm_list
 
-    - name: Calculate the date 7 days ago
-      local_action:
-        module: command
-        cmd: "date -d '7 days ago' '+%Y-%m-%dT%H:%M:%S%z'"
-      register: seven_days_ago
+    - name: Calculate 7-day-old timestamp
+      set_fact:
+        seven_days_ago: "{{ '%Y-%m-%dT%H:%M:%S%z' | strftime((ansible_date_time.epoch | int - 7*24*60*60)) }}"
 
-    - name: Delete old snapshots
+    - name: Get snapshot info for each VM
       community.vmware.vmware_guest_snapshot:
 #        hostname: "{{ vcenter_hostname }}"
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"
-        datacenter: "{{ datacenter_name }}"
-        name: "{{ vm_name }}"
-        snapshot_id: "{{ item.snapshot_id }}"
+        datacenter: "sfo-m01-dc01"
+        name: "{{ item.name }}"
+        validate_certs: no
+        state: present
+      loop: "{{ vm_list.virtual_machines }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: all_snapshots
+
+    - name: Delete snapshots older than 7 days
+      community.vmware.vmware_guest_snapshot:
+#        hostname: "{{ vcenter_hostname }}"
+#        username: "{{ vcenter_username }}"
+#        password: "{{ vcenter_password }}"
+        datacenter: "sfo-m01-dc01"
+        name: "{{ item.1.name }}"
+        snapshot_id: "{{ snapshot.snapshot_id }}"
         state: absent
         validate_certs: no
-      loop: "{{ snapshot_info.snapshot_data }}"
-      when: item.created_at is defined and item.created_at < seven_days_ago.stdout
-      # Add this line to include the creation time for the snapshot
+      loop: "{{ all_snapshots.results | subelements('snapshot_data', skip_missing=True) }}"
+      loop_control:
+        label: "{{ item.1.name }} - {{ snapshot.snapshot_id }}"
       vars:
-          created_at_datetime: "{{ item.created_at | to_datetime('%Y-%m-%dT%H:%M:%S%z') }}"
-      # Print the deleted snapshot ID for logging purposes
-      changed_when: true
-      # Uncomment this line to ensure it actually does the deletion
-      # register: delete_result
+        snapshot: "{{ item.0 }}"
+      when:
+        - snapshot.created is defined
+        - snapshot.created < seven_days_ago

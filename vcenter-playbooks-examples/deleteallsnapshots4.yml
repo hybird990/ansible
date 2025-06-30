@@ -1,0 +1,7 @@
+- name: Remove all VM snapshots
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Remove all VM snapshots without confirmation
+      win_shell: |
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-VM | Get-Snapshot | Remove-Snapshot -Confirm:$false"

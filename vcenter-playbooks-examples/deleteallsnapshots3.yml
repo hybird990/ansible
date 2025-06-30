@@ -1,6 +1,6 @@
 - name: Delete VMware snapshots older than 7 days for all VMs
   hosts: localhost
-  gather_facts: false
+  gather_facts: true
   vars:
 #    vcenter_hostname: "your-vcenter-host"
 #    vcenter_username: "your-username"

@@ -1,0 +1,45 @@
+- name: Delete all snapshots in vCenter for all VMs
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+#    vcenter_hostname: "your-vcenter-host"
+#    vcenter_username: "your-username"
+#    vcenter_password: "your-password"
+#   datacenter_name: "optional-datacenter-if-needed"
+
+  tasks:
+    - name: Retrieve all virtual machines
+      community.vmware.vmware_vm_info:
+#        hostname: "{{ vcenter_hostname }}"
+#        username: "{{ vcenter_username }}"
+#        password: "{{ vcenter_password }}"
+        validate_certs: no
+      register: vm_list
+
+    - name: Retrieve snapshot info for each VM
+      community.vmware.vmware_guest_snapshot:
+ #       hostname: "{{ vcenter_hostname }}"
+ #       username: "{{ vcenter_username }}"
+ #       password: "{{ vcenter_password }}"
+        name: "{{ item.guest_name }}"
+        validate_certs: no
+        state: present
+      loop: "{{ vm_list.virtual_machines }}"
+      when: item.guest_name is defined
+      register: all_snapshots
+
+    - name: Delete every snapshot found
+      community.vmware.vmware_guest_snapshot:
+  #      hostname: "{{ vcenter_hostname }}"
+  #      username: "{{ vcenter_username }}"
+  #      password: "{{ vcenter_password }}"
+        name: "{{ item.1.guest_name }}"
+        snapshot_id: "{{ snapshot.snapshot_id }}"
+        state: absent
+        validate_certs: no
+      loop: "{{ all_snapshots.results | subelements('snapshot_data', skip_missing=True) }}"
+      loop_control:
+        label: "{{ item.1.guest_name }} - {{ snapshot.snapshot_id }}"
+      vars:
+        snapshot: "{{ item.0 }}"

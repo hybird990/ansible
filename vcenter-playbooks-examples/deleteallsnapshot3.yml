@@ -10,7 +10,7 @@
 
   tasks:
     - name: Retrieve all virtual machines
-    community.vmware.vmware_vm_info:
+      community.vmware.vmware_vm_info:
 #       hostname: "{{ vcenter_hostname }}"
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"

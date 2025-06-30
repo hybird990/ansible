@@ -1,4 +1,4 @@
-- name: Delete all snapshots in vCenter for all VMs
+- name: Delete VMware snapshots for all VMs
   hosts: localhost
   gather_facts: false
 

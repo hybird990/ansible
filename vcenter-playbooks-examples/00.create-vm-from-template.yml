@@ -7,8 +7,8 @@
     - name: Clone the template
       vmware_guest:
         hostname: "vc1.vmware.local"
-#        username: "your-username"
-#        password: "your-password"
+        username: "administrator@vsphere.local"
+        password: "VMware123!"
         validate_certs: False
         name: ansible-test-vm1
         template: ansible-template 

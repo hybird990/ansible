@@ -5,9 +5,9 @@
   tasks:
   - name: Clone the template
     vmware_guest:
-      hostname: 192.168.1.13 
-      username: administrator@vsphere.local
-      password: VMware1!
+#      hostname: 
+#      username: 
+#      password: 
       validate_certs: False
       name: ansible-test-vm1
       template: ansible-template 

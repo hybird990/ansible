@@ -1,4 +1,4 @@
-- name: Delete VMware snapshots for all VMs
+- name: Delete all snapshots from all VMs in vCenter
   hosts: localhost
   gather_facts: false
 
@@ -6,44 +6,30 @@
 #    vcenter_hostname: "your-vcenter-host"
 #    vcenter_username: "your-username"
 #    vcenter_password: "your-password"
-    datacenter_name: "sfo-m01-dc01"  # Required by vmware_guest_snapshot
+    datacenter_name: "sfo-m01-dc01"
 
   tasks:
     - name: Retrieve all virtual machines
       community.vmware.vmware_vm_info:
-#       hostname: "{{ vcenter_hostname }}"
-#        username: "{{ vcenter_username }}"
-#        password: "{{ vcenter_password }}"
-        validate_certs: no
-      register: vm_list
-
-    - name: Retrieve snapshot info for each VM
-      community.vmware.vmware_guest_snapshot:
  #       hostname: "{{ vcenter_hostname }}"
  #       username: "{{ vcenter_username }}"
  #       password: "{{ vcenter_password }}"
-        datacenter: "{{ datacenter_name }}"
-        name: "{{ item.guest_name }}"
-        folder: "{{ item.folder }}"
         validate_certs: no
-        state: list
-      loop: "{{ vm_list.virtual_machines }}"
-      when: item.guest_name is defined and item.folder is defined
-      register: all_snapshots
+      register: vm_list
 
-    - name: Delete every snapshot found
+    - name: Delete all snapshots for each VM (if any exist)
       community.vmware.vmware_guest_snapshot:
   #      hostname: "{{ vcenter_hostname }}"
   #      username: "{{ vcenter_username }}"
   #      password: "{{ vcenter_password }}"
         datacenter: "{{ datacenter_name }}"
-        name: "{{ item.1.guest_name }}"
-        folder: "{{ item.1.folder }}"
-        snapshot_id: "{{ snapshot.snapshot_id }}"
-        state: absent
+        name: "{{ item.guest_name }}"
+        folder: "{{ item.folder }}"
+        state: remove_all
         validate_certs: no
-      loop: "{{ all_snapshots.results | subelements('snapshot_data', skip_missing=True) }}"
+      loop: "{{ vm_list.virtual_machines }}"
+      when:
+        - item.guest_name is defined
+        - item.folder is defined
       loop_control:
-        label: "{{ item.1.guest_name }} - {{ snapshot.snapshot_id }}"
-      vars:
-        snapshot: "{{ item.0 }}"
+        label: "{{ item.guest_name }}"

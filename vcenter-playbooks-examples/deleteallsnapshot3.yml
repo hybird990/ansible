@@ -26,7 +26,7 @@
         name: "{{ item.guest_name }}"
         folder: "{{ item.folder }}"
         validate_certs: no
-        state: present
+        state: list
       loop: "{{ vm_list.virtual_machines }}"
       when: item.guest_name is defined and item.folder is defined
       register: all_snapshots

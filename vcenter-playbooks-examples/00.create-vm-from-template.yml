@@ -1,7 +1,9 @@
 ---
 - name: Create a VM from a template
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
+    vars:
+        datacenter_name: "dc1"
   tasks:
   - name: Clone the template
     vmware_guest:

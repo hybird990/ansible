@@ -6,7 +6,7 @@
 #    vcenter_hostname: "your-vcenter-host"
 #    vcenter_username: "your-username"
 #    vcenter_password: "your-password"
-   datacenter_name: "sfo-m01-dc01"
+    datacenter_name: "sfo-m01-dc01"  # Required by vmware_guest_snapshot
 
   tasks:
     - name: Retrieve all virtual machines
@@ -22,6 +22,7 @@
  #       hostname: "{{ vcenter_hostname }}"
  #       username: "{{ vcenter_username }}"
  #       password: "{{ vcenter_password }}"
+        datacenter: "{{ datacenter_name }}"
         name: "{{ item.guest_name }}"
         validate_certs: no
         state: present
@@ -34,6 +35,7 @@
   #      hostname: "{{ vcenter_hostname }}"
   #      username: "{{ vcenter_username }}"
   #      password: "{{ vcenter_password }}"
+        datacenter: "{{ datacenter_name }}"
         name: "{{ item.1.guest_name }}"
         snapshot_id: "{{ snapshot.snapshot_id }}"
         state: absent

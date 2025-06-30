@@ -5,7 +5,7 @@
 #    vcenter_hostname: "your-vcenter-host"
 #    vcenter_username: "your-username"
 #    vcenter_password: "your-password"
-    datacenter_name: "sfo-m01-dc01"
+#    datacenter_name: "sfo-m01-dc01"
 
   tasks:
     - name: Get list of all virtual machines
@@ -13,7 +13,7 @@
 #        hostname: "{{ vcenter_hostname }}"
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"
-        datacenter: "{{ datacenter_name }}"
+#        datacenter: "{{ datacenter_name }}"
         validate_certs: no
       register: vm_list
 
@@ -26,7 +26,7 @@
 #        hostname: "{{ vcenter_hostname }}"
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"
-        datacenter: "{{ datacenter_name }}"
+#        datacenter: "{{ datacenter_name }}"
         name: "{{ item.name }}"
         validate_certs: no
         state: present
@@ -40,7 +40,7 @@
 #        hostname: "{{ vcenter_hostname }}"
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"
-        datacenter: "{{ datacenter_name }}"
+#        datacenter: "{{ datacenter_name }}"
         name: "{{ item.1.name }}"
         snapshot_id: "{{ snapshot.snapshot_id }}"
         state: absent

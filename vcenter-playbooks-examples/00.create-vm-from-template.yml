@@ -1,7 +1,7 @@
 ---
 - name: Create a VM from a template
   hosts: localhost
-  gather_facts: false
+  gather_facts: true
   vars:
    datacenter_name: "dc1"
   tasks:

@@ -1,20 +1,19 @@
----
 - name: Create a VM from a template
   hosts: localhost
   gather_facts: true
   vars:
-   datacenter_name: "dc1"
+    datacenter_name: "dc1"
   tasks:
-  - name: Clone the template
-    vmware_guest:
-#      hostname: 
-#      username: 
-#      password: 
-      validate_certs: False
-      name: ansible-test-vm1
-      template: ansible-template 
-      datacenter: dc1
-      folder: /dc1/vm
-      state: poweredon
-      cluster: cl1
-      wait_for_ip_address: no
+    - name: Clone the template
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+#        username: "your-username"
+#        password: "your-password"
+        validate_certs: False
+        name: ansible-test-vm1
+        template: ansible-template 
+        datacenter: "{{ datacenter_name }}"
+        folder: /dc1/vm
+        state: poweredon
+        cluster: cl1
+        wait_for_ip_address: no

@@ -5,7 +5,7 @@
 #    vcenter_hostname: "your-vcenter-host"
 #    vcenter_username: "your-username"
 #    vcenter_password: "your-password"
-    datacenter_name: sfo-m01-dc01
+#    datacenter_name: sfo-m01-dc01
 
   tasks:
     - name: Get list of all virtual machines

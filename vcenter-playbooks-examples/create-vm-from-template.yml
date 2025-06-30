@@ -7,8 +7,8 @@
     - name: Clone the template
       vmware_guest:
         hostname: "vc1.vmware.local"
-        username: "administrator@vsphere.local"
-        password: "VMware1!"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
         validate_certs: False
         name: ansible-test-vm1
         template: ansible-template 

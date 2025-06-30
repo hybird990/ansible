@@ -17,7 +17,7 @@
         validate_certs: no
       register: vm_list
 
-    - name: Delete all snapshots for each VM (if any exist)
+    - name: Remove all snapshots from each VM (skipping system VMs)
       community.vmware.vmware_guest_snapshot:
   #      hostname: "{{ vcenter_hostname }}"
   #      username: "{{ vcenter_username }}"
@@ -31,5 +31,7 @@
       when:
         - item.guest_name is defined
         - item.folder is defined
+        - not item.guest_name.startswith('vCLS-')
       loop_control:
         label: "{{ item.guest_name }}"
+      ignore_errors: true  # Optional: continue even if one VM fails

@@ -10,8 +10,8 @@
 
   tasks:
     - name: Retrieve all virtual machines
-      community.vmware.vmware_vm_info:
-#        hostname: "{{ vcenter_hostname }}"
+    community.vmware.vmware_vm_info:
+#       hostname: "{{ vcenter_hostname }}"
 #        username: "{{ vcenter_username }}"
 #        password: "{{ vcenter_password }}"
         validate_certs: no
@@ -24,10 +24,11 @@
  #       password: "{{ vcenter_password }}"
         datacenter: "{{ datacenter_name }}"
         name: "{{ item.guest_name }}"
+        folder: "{{ item.folder }}"
         validate_certs: no
         state: present
       loop: "{{ vm_list.virtual_machines }}"
-      when: item.guest_name is defined
+      when: item.guest_name is defined and item.folder is defined
       register: all_snapshots
 
     - name: Delete every snapshot found
@@ -37,6 +38,7 @@
   #      password: "{{ vcenter_password }}"
         datacenter: "{{ datacenter_name }}"
         name: "{{ item.1.guest_name }}"
+        folder: "{{ item.1.folder }}"
         snapshot_id: "{{ snapshot.snapshot_id }}"
         state: absent
         validate_certs: no

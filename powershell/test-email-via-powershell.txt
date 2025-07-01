@@ -1,0 +1,1 @@
+Send-MailMessage -To "user@vmware.local" -From "test@vmware.local" -Subject "PowerShell Test Email" -Body "This is a test email sent from PowerShell." -SmtpServer "172.168.1.10" -Port 25

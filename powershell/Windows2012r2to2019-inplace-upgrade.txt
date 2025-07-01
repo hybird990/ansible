@@ -1,0 +1,43 @@
+Step0
+copy iso to datastore in vcenter manually, validate vmtools installed on vms, validate 2012 R2 version, confirm application works on 2019, need to go from the same build standard to standard server for example, needs to be activated and not eval
+
+Step1 
+# install module into powershell to manage vcenter
+Install-Module -Name VMware.PowerCLI
+#stop ssl errors
+Set-PowerCLIConfiguration -InvalidCertificateAction Ignore
+
+Step2
+# Connect to your vCenter Server
+Connect-VIServer -Server "YourvCenterServer"
+Connect-VIServer -Server "vcenter.domain.local
+
+Step3 
+# VMs store in variable
+$VMs = Get-VM -Name "VM1", "VM2", "VM3"
+$VMs = Get-VM -Name "winsvr2012test
+
+Step4
+# Create snapshots for a list of specific VMs
+$VMs | New-Snapshot -Name "Upgrade to 2019" -Description "before upgrade from 2012 to 2019"
+
+Step5
+# Define the path to your ISO file
+$IsoPath = "[YourDatastoreName] YourFolderName/YourISOFile.iso"
+$IsoPath = "[ds1] ISO/windows_server_2019.iso"
+
+Step6
+# Connect the ISO to each VM
+foreach ($VM in $VMs) {
+        Get-CDDrive -VM $VM | Set-CDDrive -IsoPath $IsoPath -Connected:$true -Confirm:$false
+    }
+
+Step7
+# Run remote command through vmtools
+Invoke-VMScript -VM $vm -GuestUser "administrator@vmware.local" -GuestPassword "VMware1!" -ScriptText "mkdir c:\ISO"
+Invoke-VMScript -VM $vm -GuestUser "administrator@vmware.local" -GuestPassword "VMware1!" -ScriptText "xcopy D:\*.* C:\ISO /E /I /H /Y"
+Invoke-VMScript -VM $vm -GuestUser "administrator@vmware.local" -GuestPassword "VMware1!" -ScriptText "c:\ISO\setup.exe /auto upgrade /quiet /imageindex 1 /DynamicUpdate Disable /compat ignorewarning"
+
+
+#Mointor
+C:\$WINDOWS.~BT\Sources\Panther\setupact.log

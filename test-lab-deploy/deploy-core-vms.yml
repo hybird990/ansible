@@ -1,4 +1,4 @@
-- name: Create a VM from a template
+- name: Create a VM from a template - deploy lab environment
   hosts: localhost
   gather_facts: true
   vars:

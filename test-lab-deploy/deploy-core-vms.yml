@@ -32,7 +32,7 @@
         cluster: cl1
         wait_for_ip_address: no
         
- - name: Clone the template test-SMTP 
+    - name: Clone the template test-SMTP 
       vmware_guest:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"
@@ -46,7 +46,7 @@
         cluster: cl1
         wait_for_ip_address: no
         
- - name: Clone the template test-VYOS 
+    - name: Clone the template test-VYOS 
       vmware_guest:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"
@@ -60,7 +60,7 @@
         cluster: cl1
         wait_for_ip_address: no
         
- - name: Clone the template test-W10WS
+    - name: Clone the template test-W10WS
       vmware_guest:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"
@@ -74,7 +74,7 @@
         cluster: cl1
         wait_for_ip_address: no
         
- - name: Clone the template test-WIN2019SVR
+    - name: Clone the template test-WIN2019SVR
       vmware_guest:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"

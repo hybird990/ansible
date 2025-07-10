@@ -1,17 +1,15 @@
 - name: Deploy VM from template
-  hosts: vc1.vmware.local
+  hosts: localhost
   gather_facts: false
   tasks:
-    - name: Deploy VM from template
-      community.vmware.vmware_guest:
-        hostname: "vc1.vmware.local"
-        username: "{{ lookup('env', 'VMWARE_USER') }}"
-        password: "{{ lookup('env', 'VMWARE_PASS') }}"
-        validate_certs: false
-        datacenter: "dc1"
-        folder: /dc1/vm
-        template: "test-AD-DNS"
-        name: "test-AD-DNS-1"
-        state: poweredon
-        cluster: cl1
-        wait_for_ip_address: no
+- name: Deploy Virtual Machine from template in content library with PowerON State
+  community.vmware.vmware_content_deploy_template:
+    hostname: "vc1.vmware.local"
+    username: "{{ lookup('env', 'VMWARE_USER') }}"
+    password: "{{ lookup('env', 'VMWARE_PASS') }}"
+    template: test-AD-DNS
+    folder: vm
+    datacenter: dc1
+    name: test-AD-DNS-1
+    state: poweredon
+  delegate_to: localhost

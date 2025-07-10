@@ -28,7 +28,7 @@
         template: test-REDHATSVR
         datacenter: "{{ datacenter_name }}"
         folder: /dc1/vm
-        state: poweredon
+#        state: poweredon
         cluster: cl1
         wait_for_ip_address: no
         
@@ -42,7 +42,7 @@
         template: test-SMTP 
         datacenter: "{{ datacenter_name }}"
         folder: /dc1/vm
-        state: poweredon
+#        state: poweredon
         cluster: cl1
         wait_for_ip_address: no
         
@@ -56,7 +56,7 @@
         template: test-VYOS 
         datacenter: "{{ datacenter_name }}"
         folder: /dc1/vm
-        state: poweredon
+#        state: poweredon
         cluster: cl1
         wait_for_ip_address: no
         
@@ -70,7 +70,7 @@
         template: test-W10WS
         datacenter: "{{ datacenter_name }}"
         folder: /dc1/vm
-        state: poweredon
+#        state: poweredon
         cluster: cl1
         wait_for_ip_address: no
         
@@ -84,7 +84,7 @@
         template: test-WIN2019SVR
         datacenter: "{{ datacenter_name }}"
         folder: /dc1/vm
-        state: poweredon
+#        state: poweredon
         cluster: cl1
         wait_for_ip_address: no
 

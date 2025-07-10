@@ -75,7 +75,6 @@
         state: absent
         force: true
 
-- name: Remove virtual machine
     - name: Remove "test-AD-DNS-1"
       vmware_guest:
         hostname: "vc1.vmware.local"
@@ -87,7 +86,6 @@
         name: "test-AD-DNS-1"
         state: absent
 
-- name: Remove virtual machine
     - name: Remove "test-REDHATSVR-1"
       vmware_guest:
         hostname: "vc1.vmware.local"
@@ -99,7 +97,6 @@
         name: "test-REDHATSVR-1"
         state: absent
 
-- name: Remove virtual machine
     - name: Remove "test-SMTP-1"
       vmware_guest:
         hostname: "vc1.vmware.local"
@@ -111,7 +108,6 @@
         name: "test-SMTP-1"
         state: absent
 
-- name: Remove virtual machine
     - name: Remove "test-VYOS-1"
       vmware_guest:
         hostname: "vc1.vmware.local"
@@ -123,7 +119,6 @@
         name: "test-VYOS-1"
         state: absent
 
-- name: Remove virtual machine
     - name: Remove "test-W10WS-1"
       vmware_guest:
         hostname: "vc1.vmware.local"
@@ -135,7 +130,6 @@
         name: "test-W10WS-1"
         state: absent
 
-- name: Remove virtual machine
     - name: Remove "test-WIN2019SVR-1"
       vmware_guest:
         hostname: "vc1.vmware.local"

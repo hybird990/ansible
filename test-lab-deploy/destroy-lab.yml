@@ -31,12 +31,12 @@
   tasks:
     - set_fact:
         vm_name: 
-              - test-AD-DNS-1
-              - test-REDHATSVR-1
-              - test-SMTP-1
-              - test-VYOS-1
-              - test-W10WS-1
-              - test-WIN2019SVR-1
+          - test-AD-DNS-1
+          - test-REDHATSVR-1
+          - test-SMTP-1
+          - test-VYOS-1
+          - test-W10WS-1
+          - test-WIN2019SVR-1" 
         datacenter: "dc1"
     - name: Remove "{{ vm_name }}"
       vmware_guest:

@@ -2,7 +2,7 @@
   hosts: localhost
   gather_facts: false
   tasks:
-  - name: Deploy Virtual Machine from template in content library with PowerON State
+  - name: Deploy Virtual Machine from template test-AD-DNS
     vmware_guest:
       hostname: "vc1.vmware.local"
       username: "{{ lookup('env', 'VMWARE_USER') }}"
@@ -15,3 +15,69 @@
       folder: /dc1/vm
       name: test-AD-DNS-1
       state: poweredon
+  - name: Deploy Virtual Machine from template test-REDHATSVR
+    vmware_guest:
+      hostname: "vc1.vmware.local"
+      username: "{{ lookup('env', 'VMWARE_USER') }}"
+      password: "{{ lookup('env', 'VMWARE_PASS') }}"
+      validate_certs: False
+      template: test-REDHATSVR
+      datacenter: dc1
+      cluster: cl1
+      datastore: ds1-2tb
+      folder: /dc1/vm
+      name: test-REDHATSVR-1
+      state: poweredon
+  - name: Deploy Virtual Machine from template test-SMTP
+    vmware_guest:
+      hostname: "vc1.vmware.local"
+      username: "{{ lookup('env', 'VMWARE_USER') }}"
+      password: "{{ lookup('env', 'VMWARE_PASS') }}"
+      validate_certs: False
+      template: test-SMTP
+      datacenter: dc1
+      cluster: cl1
+      datastore: ds1-2tb
+      folder: /dc1/vm
+      name: test-SMTP-1
+      state: poweredon
+  - name: Deploy Virtual Machine from template test-VYOS
+    vmware_guest:
+      hostname: "vc1.vmware.local"
+      username: "{{ lookup('env', 'VMWARE_USER') }}"
+      password: "{{ lookup('env', 'VMWARE_PASS') }}"
+      validate_certs: False
+      template: test-VYOS
+      datacenter: dc1
+      cluster: cl1
+      datastore: ds1-2tb
+      folder: /dc1/vm
+      name: test-VYOS-1
+      state: poweredon
+  - name: Deploy Virtual Machine from template test-W10WS
+    vmware_guest:
+      hostname: "vc1.vmware.local"
+      username: "{{ lookup('env', 'VMWARE_USER') }}"
+      password: "{{ lookup('env', 'VMWARE_PASS') }}"
+      validate_certs: False
+      template: test-W10WS
+      datacenter: dc1
+      cluster: cl1
+      datastore: ds1-2tb
+      folder: /dc1/vm
+      name: test-W10WS-1
+      state: poweredon
+  - name: Deploy Virtual Machine from template test-WIN2019SVR
+    vmware_guest:
+      hostname: "vc1.vmware.local"
+      username: "{{ lookup('env', 'VMWARE_USER') }}"
+      password: "{{ lookup('env', 'VMWARE_PASS') }}"
+      validate_certs: False
+      template: test-WIN2019SVR
+      datacenter: dc1
+      cluster: cl1
+      datastore: ds1-2tb
+      folder: /dc1/vm
+      name: test-WIN2019SVR-1
+      state: poweredon
+  

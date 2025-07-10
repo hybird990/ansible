@@ -2,6 +2,19 @@
   hosts: localhost
   gather_facts: false
   tasks:
+  - name: Deploy Virtual Machine from template test-VYOS
+    vmware_guest:
+      hostname: "vc1.vmware.local"
+      username: "{{ lookup('env', 'VMWARE_USER') }}"
+      password: "{{ lookup('env', 'VMWARE_PASS') }}"
+      validate_certs: False
+      template: test-VYOS
+      datacenter: dc1
+      cluster: cl1
+      datastore: ds1-2tb
+      folder: /dc1/vm
+      name: test-VYOS-1
+      state: poweredon
   - name: Deploy Virtual Machine from template test-AD-DNS
     vmware_guest:
       hostname: "vc1.vmware.local"
@@ -14,19 +27,6 @@
       datastore: ds1-2tb
       folder: /dc1/vm
       name: test-AD-DNS-1
-      state: poweredon
-  - name: Deploy Virtual Machine from template test-REDHATSVR
-    vmware_guest:
-      hostname: "vc1.vmware.local"
-      username: "{{ lookup('env', 'VMWARE_USER') }}"
-      password: "{{ lookup('env', 'VMWARE_PASS') }}"
-      validate_certs: False
-      template: test-REDHATSVR
-      datacenter: dc1
-      cluster: cl1
-      datastore: ds1-2tb
-      folder: /dc1/vm
-      name: test-REDHATSVR-1
       state: poweredon
   - name: Deploy Virtual Machine from template test-SMTP
     vmware_guest:
@@ -41,18 +41,18 @@
       folder: /dc1/vm
       name: test-SMTP-1
       state: poweredon
-  - name: Deploy Virtual Machine from template test-VYOS
+  - name: Deploy Virtual Machine from template test-REDHATSVR
     vmware_guest:
       hostname: "vc1.vmware.local"
       username: "{{ lookup('env', 'VMWARE_USER') }}"
       password: "{{ lookup('env', 'VMWARE_PASS') }}"
       validate_certs: False
-      template: test-VYOS
+      template: test-REDHATSVR
       datacenter: dc1
       cluster: cl1
       datastore: ds1-2tb
       folder: /dc1/vm
-      name: test-VYOS-1
+      name: test-REDHATSVR-1
       state: poweredon
   - name: Deploy Virtual Machine from template test-W10WS
     vmware_guest:

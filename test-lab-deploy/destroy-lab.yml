@@ -4,13 +4,7 @@
   hosts: localhost
   tasks:
     - set_fact:
-        vm_name: 
-              - test-AD-DNS-1
-              - test-REDHATSVR-1
-              - test-SMTP-1
-              - test-VYOS-1
-              - test-W10WS-1
-              - test-WIN2019SVR-1 
+        vm_name: "test-AD-DNS-1", "test-REDHATSVR-1", "test-SMTP-1", "test-VYOS-1", "test-W10WS-1", "test-WIN2019SVR-1" 
         datacenter: "dc1"
     - name: poweroff "{{ vm_name }}"
       vmware_guest:

@@ -7,6 +7,7 @@
       hostname: "vc1.vmware.local"
       username: "{{ lookup('env', 'VMWARE_USER') }}"
       password: "{{ lookup('env', 'VMWARE_PASS') }}"
+      validate_certs: False
       template: test-AD-DNS
       datacenter: dc1
       cluster: cl1

@@ -14,4 +14,3 @@
       folder: /dc1/vm
       name: test-AD-DNS-1
       state: poweredon
-      delegate_to: localhost

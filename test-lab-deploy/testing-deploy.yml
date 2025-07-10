@@ -3,15 +3,15 @@
   gather_facts: false
   tasks:
   - name: Deploy Virtual Machine from template in content library with PowerON State
-    community.vmware.vmware_content_deploy_template:
+    vmware_content_deploy_template:
       hostname: "vc1.vmware.local"
       username: "{{ lookup('env', 'VMWARE_USER') }}"
       password: "{{ lookup('env', 'VMWARE_PASS') }}"
       template: test-AD-DNS
+      datacenter: dc1
       cluster: cl1
       datastore: ds1-2tb
-      folder: vm
-      datacenter: dc1
+      folder: /dc1/vm
       name: test-AD-DNS-1
       state: poweredon
       delegate_to: localhost

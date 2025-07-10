@@ -8,6 +8,7 @@
       username: "{{ lookup('env', 'VMWARE_USER') }}"
       password: "{{ lookup('env', 'VMWARE_PASS') }}"
       template: test-AD-DNS
+      datastore: ds1-2tb
       folder: vm
       datacenter: dc1
       name: test-AD-DNS-1

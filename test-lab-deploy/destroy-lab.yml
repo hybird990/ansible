@@ -3,49 +3,148 @@
   gather_facts: no
   hosts: localhost
   tasks:
-    - set_fact:
-        vm_name: 
-          - test-AD-DNS-1
-          - test-REDHATSVR-1
-          - test-SMTP-1
-          - test-VYOS-1
-          - test-W10WS-1
-          - test-WIN2019SVR-1" 
-        datacenter: "dc1"
-    - name: poweroff "{{ vm_name }}"
+    - name: poweroff "test-AD-DNS-1"
       vmware_guest:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"
         password: "{{ lookup('env', 'VMWARE_PASS') }}"
         validate_certs: no
+        datacenter: "dc1"
         cluster: "cl1"
-        name: "{{ vm_name }}"
+        name: "test-AD-DNS-1"
         state: absent
         force: true
-      delegate_to: localhost
-      register: facts
-      
-- name: Remove virtual machine
-  gather_facts: no
-  hosts: localhost
-  tasks:
-    - set_fact:
-        vm_name: 
-          - test-AD-DNS-1
-          - test-REDHATSVR-1
-          - test-SMTP-1
-          - test-VYOS-1
-          - test-W10WS-1
-          - test-WIN2019SVR-1" 
-        datacenter: "dc1"
-    - name: Remove "{{ vm_name }}"
+  
+    - name: poweroff "test-REDHATSVR-1"
       vmware_guest:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"
         password: "{{ lookup('env', 'VMWARE_PASS') }}"
         validate_certs: no
+        datacenter: "dc1"
         cluster: "cl1"
-        name: "{{ vm_name }}"
+        name: "test-REDHATSVR-1"
         state: absent
-      delegate_to: localhost
-      register: facts
+        force: true
+
+    - name: poweroff "test-SMTP-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-SMTP-1"
+        state: absent
+        force: true
+
+    - name: poweroff "test-VYOS-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-VYOS-1"
+        state: absent
+        force: true
+
+    - name: poweroff "test-W10WS-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-W10WS-1"
+        state: absent
+        force: true
+
+    - name: poweroff "test-WIN2019SVR-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-WIN2019SVR-1"
+        state: absent
+        force: true
+
+- name: Remove virtual machine
+    - name: Remove "test-AD-DNS-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-AD-DNS-1"
+        state: absent
+
+- name: Remove virtual machine
+    - name: Remove "test-REDHATSVR-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-REDHATSVR-1"
+        state: absent
+
+- name: Remove virtual machine
+    - name: Remove "test-SMTP-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-SMTP-1"
+        state: absent
+
+- name: Remove virtual machine
+    - name: Remove "test-VYOS-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-VYOS-1"
+        state: absent
+
+- name: Remove virtual machine
+    - name: Remove "test-W10WS-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-W10WS-1"
+        state: absent
+
+- name: Remove virtual machine
+    - name: Remove "test-WIN2019SVR-1"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        datacenter: "dc1"
+        cluster: "cl1"
+        name: "test-WIN2019SVR-1"
+        state: absent
+
+

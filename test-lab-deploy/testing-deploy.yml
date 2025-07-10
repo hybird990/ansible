@@ -12,4 +12,4 @@
       datacenter: dc1
       name: test-AD-DNS-1
       state: poweredon
-     delegate_to: localhost
+      delegate_to: localhost

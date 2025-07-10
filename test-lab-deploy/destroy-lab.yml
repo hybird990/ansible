@@ -1,0 +1,51 @@
+---
+- name: Power off virtual machine
+  gather_facts: no
+  hosts: localhost
+  tasks:
+    - set_fact:
+        vm_name: 
+              - test-AD-DNS-1
+              - test-REDHATSVR-1
+              - test-SMTP-1
+              - test-VYOS-1
+              - test-W10WS-1
+              - test-WIN2019SVR-1 
+        datacenter: "dc1"
+    - name: poweroff "{{ vm_name }}"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        cluster: "DC1_C1"
+        name: "{{ vm_name }}"
+        state: absent
+        force: true
+      delegate_to: localhost
+      register: facts
+      
+- name: Remove virtual machine
+  gather_facts: no
+  hosts: localhost
+  tasks:
+    - set_fact:
+        vm_name: 
+              - test-AD-DNS-1
+              - test-REDHATSVR-1
+              - test-SMTP-1
+              - test-VYOS-1
+              - test-W10WS-1
+              - test-WIN2019SVR-1
+        datacenter: "dc1"
+    - name: Remove "{{ vm_name }}"
+      vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        cluster: "cl1"
+        name: "{{ vm_name }}"
+        state: absent
+      delegate_to: localhost
+      register: facts

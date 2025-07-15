@@ -49,16 +49,14 @@
         state: poweredon
         wait_for_ip_address: true
     
-    - name: Get VM UUID
-      vmware_guest_facts:
+    - name: Get VM information
+      community.vmware.vmware_vm_info:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"
         password: "{{ lookup('env', 'VMWARE_PASS') }}"
-        datacenter: "dc1"
-        folder: "lab-deploy"
-        name: "{{ vm_name }}"
-      delegate_to: localhost
-      register: vm_facts
+        vm_id: "{{ vm_id_to_get }}"
+        validate_certs: false
+      register: vm_info
 
     - name: Upgrade VMware Tools using uuid
       community.vmware.vmware_guest_tools_upgrade:
@@ -66,5 +64,5 @@
         username: "{{ lookup('env', 'VMWARE_USER') }}"
         password: "{{ lookup('env', 'VMWARE_PASS') }}"
         datacenter: "dc1"
-        uuid: "{{ vm_facts.instance.hw_product_uuid }}"
+        vm_id: "{{ vm_id_to_get }}"
       delegate_to: localhost

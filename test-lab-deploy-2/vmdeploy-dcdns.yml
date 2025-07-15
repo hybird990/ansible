@@ -23,6 +23,7 @@
         datacenter: "{{ datacenter }}"
         cluster: "{{ cluster }}"
         name: "{{ vm_name }}"
+        vmtools_state: present
         folder: "lab-deploy"
         guest_id: "windows2019srv_64Guest"
         hardware:

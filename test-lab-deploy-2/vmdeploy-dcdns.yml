@@ -39,5 +39,5 @@
             state: present
             type: iso
             iso_path: "{{ iso_path }}"
-        state: powered_on
+        state: powereron
         wait_for_ip_address: true

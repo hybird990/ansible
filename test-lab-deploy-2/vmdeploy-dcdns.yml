@@ -1,5 +1,5 @@
 ---
-- hosts: your_vcenter_host
+- hosts: vc1.vmware.local
   gather_facts: false
   vars:
     vm_name: "test-dcdns"

@@ -40,7 +40,7 @@
             type: iso
             iso_path: "{{ iso_path }}"
         disk:
-          - size_mb: 100
+          - size_gb: 100
             type: thin
             datastore: esxi-nuc-02-ds
 #            state: present

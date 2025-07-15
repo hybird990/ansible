@@ -1,5 +1,5 @@
 ---
-- hosts: vc1.vmware.local
+- hosts: 192.168.1.13
   gather_facts: false
   vars:
     vm_name: "test-dcdns"

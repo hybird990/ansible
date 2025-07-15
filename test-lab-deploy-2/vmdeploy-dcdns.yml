@@ -14,7 +14,7 @@
         netmask: "255.255.255.0"
         gateway: "172.16.30.254"
   tasks:
-    - name: Create VM from ISO
+    - name: deploy new vm
       community.vmware.vmware_guest:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"

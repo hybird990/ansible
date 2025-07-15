@@ -36,6 +36,7 @@
           - controller_number: 0
             unit_number: 0
             controller_type: sata
+            size_gb: 100 
             state: present
             type: iso
             iso_path: "{{ iso_path }}"

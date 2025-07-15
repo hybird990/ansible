@@ -43,10 +43,10 @@
           - size_mb: 100
             type: thin
             datastore: esxi-nuc-02-ds
-            state: present
-            scsi_controller: 1
+#            state: present
+            controller_number: 1
             unit_number: 1
-            scsi_type: 'paravirtual'
+            controller_type: 'paravirtual'
             disk_mode: 'persistent'
         state: poweredon
         wait_for_ip_address: true

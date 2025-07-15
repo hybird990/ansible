@@ -28,7 +28,7 @@
         hardware:
           memory_mb: 8192
           num_cpus: 4
-          scsi: "pvscsi"
+          scsi: "paravirtual"
         networks: "{{ networks }}"
         datastore: "{{ datastore }}"
 #        resource_pool: "{{ resource_pool }}"

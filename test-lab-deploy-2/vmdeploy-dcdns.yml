@@ -60,7 +60,11 @@
       delegate_to: localhost
       register: vm_facts
 
-    - name: Update the vm-tools
+    - name: Upgrade VMware Tools using uuid
       community.vmware.vmware_guest_tools_upgrade:
-        vm: '{{ my_vm.id }}'
-        state: connect
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        datacenter: "dc1"
+        uuid: "{{ vm_facts.instance.hw_product_uuid }}"
+      delegate_to: localhost

@@ -49,7 +49,7 @@
         state: poweredon
         wait_for_ip_address: true
 
-     - name: Update the vm-tools
-       vmware.vmware_rest.vcenter_vm_tools_installer:
-          name: "{{ vm_name }}
-          state: connect
+    - name: Update the vm-tools
+      vmware.vmware_rest.vcenter_vm_tools_installer:
+        name: "{{ vm_name }}
+        state: connect

@@ -51,6 +51,6 @@
         register: my_vm
 
     - name: Update the vm-tools
-      vmware.vmware_rest.vcenter_vm_tools_installer:
+      community.vmware.vmware_guest_tools_upgrade:
         vm: '{{ my_vm.id }}'
         state: connect

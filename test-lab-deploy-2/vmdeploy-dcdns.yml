@@ -28,7 +28,7 @@
         hardware:
           memory_mb: 8192
           num_cpus: 4
-          scsi: "paravirtual"
+          scsi: "lsilogicsas"
         networks: "{{ networks }}"
         datastore: "{{ datastore }}"
         customization_spec: "vmspecwin2019"

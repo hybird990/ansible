@@ -31,7 +31,7 @@
           scsi: "paravirtual"
         networks: "{{ networks }}"
         datastore: "{{ datastore }}"
-        customize_spec: "vmspecwin2019"
+        customization_spec: "vmspecwin2019"
         cdrom:
           - controller_number: 0
             unit_number: 0

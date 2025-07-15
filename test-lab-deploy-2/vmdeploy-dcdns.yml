@@ -23,13 +23,11 @@
         datacenter: "{{ datacenter }}"
         cluster: "{{ cluster }}"
         name: "{{ vm_name }}"
-        vmtools_state: present
         folder: "lab-deploy"
         guest_id: "windows2019srv_64Guest"
         hardware:
           memory_mb: 8192
           num_cpus: 4
-#          scsi: "paravirtual"
         networks: "{{ networks }}"
         datastore: "{{ datastore }}"
         customization_spec: "vmspecwin2019"
@@ -44,10 +42,14 @@
           - size_gb: 100
             type: thin
             datastore: esxi-nuc-02-ds
-#            state: present
             controller_number: 1
             unit_number: 1
             controller_type: 'lsilogicsas'
             disk_mode: 'persistent'
         state: poweredon
         wait_for_ip_address: true
+
+     - name: Update the vm-tools
+       vmware.vmware_rest.vcenter_vm_tools_installer:
+          name: "{{ vm_name }}
+          state: connect

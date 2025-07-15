@@ -24,7 +24,7 @@
         datacenter: "{{ datacenter }}"
         cluster: "{{ cluster }}"
         name: "{{ vm_name }}"
-#        folder: "/{{ datacenter }}/vm/{{ vm_name }}"
+        folder: "/{{ datacenter }}/lab-deploy/{{ vm_name }}"
         guest_id: "windows2019srv_64Guest"
         hardware:
           memory_mb: 8192

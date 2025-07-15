@@ -28,7 +28,7 @@
         hardware:
           memory_mb: 8192
           num_cpus: 4
-          scsi: "paravirtual"
+#          scsi: "paravirtual"
         networks: "{{ networks }}"
         datastore: "{{ datastore }}"
         customization_spec: "vmspecwin2019"
@@ -46,7 +46,7 @@
 #            state: present
             controller_number: 1
             unit_number: 1
-            controller_type: 'paravirtual'
+            controller_type: 'lsilogicsas'
             disk_mode: 'persistent'
         state: poweredon
         wait_for_ip_address: true

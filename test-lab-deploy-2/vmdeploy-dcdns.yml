@@ -7,7 +7,6 @@
     datacenter: "dc1"
     cluster: "cl1"
     datastore: "ds1-2tb"
-#    resource_pool: "your_resource_pool"
     networks:
       - name: "allvlans4095"
         type: "static"
@@ -24,7 +23,6 @@
         datacenter: "{{ datacenter }}"
         cluster: "{{ cluster }}"
         name: "{{ vm_name }}"
-#        folder: "/{{ datacenter }}/lab-deploy/{{ vm_name }}"
         folder: "lab-deploy"
         guest_id: "windows2019srv_64Guest"
         hardware:
@@ -33,7 +31,7 @@
           scsi: "paravirtual"
         networks: "{{ networks }}"
         datastore: "{{ datastore }}"
-#        resource_pool: "{{ resource_pool }}"
+        customize_spec: "my-customization-spec"
         cdrom:
           - controller_number: 0
             unit_number: 0

@@ -4,7 +4,7 @@
   vars:
     vm_name: "test-dcdns"
     iso_path: "[ds1-2tb] /ISO/1.en_windows_server_2019_vl_x64_12.2019.iso"
-    datacenter: "/dc1"
+    datacenter: dc1
     cluster: "cl1"
     datastore: "ds1-2tb"
 #    resource_pool: "your_resource_pool"

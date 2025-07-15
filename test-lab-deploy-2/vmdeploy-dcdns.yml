@@ -1,1 +1,43 @@
-
+---
+- hosts: your_vcenter_host
+  gather_facts: false
+  vars:
+    vm_name: "test-dcdns"
+    iso_path: "[ds1-2tb] /ISO/1.en_windows_server_2019_vl_x64_12.2019.iso"
+    datacenter: "dc1"
+    cluster: "cl1"
+    datastore: "ds1-2tb"
+#    resource_pool: "your_resource_pool"
+    networks:
+      - name: "allvlans4095"
+        type: "static"
+        ip: "172.16.30.10"
+        netmask: "255.255.255.0"
+        gateway: "172.16.30.254"
+  tasks:
+    - name: Create VM from ISO
+      community.vmware.vmware_guest:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        datacenter: "{{ datacenter }}"
+        cluster: "{{ cluster }}"
+        name: "{{ vm_name }}"
+        folder: "/{{ datacenter }}/vm/{{ vm_name }}"
+        guest_id: "windows2019srv_64Guest"
+        hardware:
+          memory_mb: 8192
+          num_cpus: 4
+          scsi: "pvscsi"
+        networks: "{{ networks }}"
+        datastore: "{{ datastore }}"
+#        resource_pool: "{{ resource_pool }}"
+        cdrom:
+          - controller_number: 0
+            unit_number: 0
+            controller_type: sata
+            state: present
+            type: iso
+            iso_path: "{{ iso_path }}"
+        state: powered_on
+        wait_for_ip_address: true

@@ -48,7 +48,17 @@
             disk_mode: 'persistent'
         state: poweredon
         wait_for_ip_address: true
-        register: my_vm
+    
+    - name: Get VM UUID
+      vmware_guest_facts:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        datacenter: "dc1"
+        folder: "lab-deploy"
+        name: "{{ vm_name }}"
+      delegate_to: localhost
+      register: vm_facts
 
     - name: Update the vm-tools
       community.vmware.vmware_guest_tools_upgrade:

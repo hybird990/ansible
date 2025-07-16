@@ -1,0 +1,30 @@
+#Get windows version, get kms server details and change kms server if required
+#If getting creds errors
+#Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds" -Name "ConsolePrompting" -Value $True
+
+#ignore cert errors
+Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:$false
+
+#import VMware modules to use
+Import-Module -Name VMware.PowerCLI
+
+#get vcenter creds and connect to vcenter
+$creds = Get-Credential
+Connect-VIServer -Server vc1.vmware.local -Credential $creds
+
+#vm list
+$VMs = Get-VM -Name "smtp"
+
+# connect to vm using domain creds or local admin
+$creds1 = Get-Credential
+
+# get windows version
+Invoke-VMScript -VM $VMs -GuestCredential $creds1 -ScriptText "Get-ComputerInfo | Select-Object OsName, OsVersion"
+
+
+# get kms server
+Invoke-VMScript -VM $VMs -GuestCredential $creds1 -ScriptText "cscript c:\Windows\System32\slmgr.vbs /dli > c:\slmgr_result.txt"
+Invoke-VMScript -VM $VMs -GuestCredential $creds1 -ScriptText "Get-Content c:\slmgr_result.txt"
+
+# get change kms server if required - Not Tested
+#Invoke-VMScript -VM $VMs -GuestCredential $creds1 -ScriptText "cscript $env:windir\System32\slmgr.vbs -skms <KMS_Server_Name_or_IP>"

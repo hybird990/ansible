@@ -30,7 +30,6 @@
           num_cpus: 4
         networks: "{{ networks }}"
         datastore: "{{ datastore }}"
-        customization_spec: "vmspecwin2019"
         cdrom:
           - controller_number: 0
             unit_number: 0
@@ -47,4 +46,6 @@
             controller_type: 'lsilogicsas'
             disk_mode: 'persistent'
         state: poweredon
+        customization:
+          spec: "vmspecwin2019"
         wait_for_ip_address: true

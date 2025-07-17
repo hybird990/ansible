@@ -57,5 +57,3 @@
         datacenter: "{{ datacenter }}"
         vm_name: "{{ vm_name }}"
         boot_firmware: "efi"  # Or "bios"
-   # Other boot options as needed
-      state: present

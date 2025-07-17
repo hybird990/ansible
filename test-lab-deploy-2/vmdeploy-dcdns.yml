@@ -1,4 +1,4 @@
-- name: Deploy Windows Server VM with EFI
+- name: Deploy Windows Server VM with EFI and ISO
   hosts: localhost
   gather_facts: false
   vars:
@@ -49,7 +49,7 @@
             disk_mode: 'persistent'
         state: present
 
-    - name: Set firmware to EFI before powering on
+    - name: Set boot firmware to EFI before powering on
       community.vmware.vmware_guest_boot_manager:
         hostname: "vc1.vmware.local"
         username: "{{ lookup('env', 'VMWARE_USER') }}"

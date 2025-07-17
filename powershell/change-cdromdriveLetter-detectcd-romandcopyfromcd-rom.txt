@@ -1,0 +1,19 @@
+# works pick up the d mounted what ever drive letter it is and copies from cd-rom drive to ISO folder
+$script = @'
+$cdDrive = (Get-WmiObject Win32_CDROMDrive).Drive
+if (!(Test-Path "C:\ISO")) { New-Item -Path "C:\ISO" -ItemType Directory }
+xcopy "$cdDrive\*.*" "C:\ISO" /E /I /H /Y
+'@
+
+Invoke-VMScript -VM $VMs -GuestCredential $creds1 -ScriptText $script
+
+# Or change drive letter to R
+$script = @'
+$cdDrive = Get-WmiObject Win32_Volume | Where-Object { $_.DriveType -eq 5 }
+if ($cdDrive) {
+    $cdDrive.DriveLetter = "R:"
+    $cdDrive.Put()
+}
+'@
+
+Invoke-VMScript -VM $VMs -GuestCredential $creds1 -ScriptText $script

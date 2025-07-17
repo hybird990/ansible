@@ -1,4 +1,4 @@
-# works pick up the d mounted what ever drive letter it is and copies from cd-rom drive to ISO folder
+# pick up the cd-rom mounted what ever drive letter is and copies from cd-rom drive to ISO folder
 $script = @'
 $cdDrive = (Get-WmiObject Win32_CDROMDrive).Drive
 if (!(Test-Path "C:\ISO")) { New-Item -Path "C:\ISO" -ItemType Directory }

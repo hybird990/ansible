@@ -3,7 +3,7 @@
   gather_facts: false
   vars:
     vm_name: "test-dcdns"
-    iso_path: "[esxi-nuc-02-ds] /ISO/2019-1.iso"
+    iso_path: "[esxi-nuc-02-ds] /ISO/2019-2.iso"
     datacenter: "dc1"
     cluster: "cl2"
     datastore: "esxi-nuc-02-ds"

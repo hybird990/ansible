@@ -46,5 +46,5 @@
             controller_type: 'lsilogicsas'
             disk_mode: 'persistent'
         state: poweredon
-        secure_boot_enabled: True
+        boot_firmware: efi
         wait_for_ip_address: true

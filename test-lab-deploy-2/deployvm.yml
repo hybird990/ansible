@@ -1,1 +1,53 @@
+- name: Create VM (powered off)
+  community.vmware.vmware_guest:
+    hostname: "vc1.vmware.local"
+    username: "{{ lookup('env', 'VMWARE_USER') }}"
+    password: "{{ lookup('env', 'VMWARE_PASS') }}"
+    validate_certs: no
+    datacenter: "{{ datacenter }}"
+    cluster: "{{ cluster }}"
+    name: "{{ vm_name }}"
+    folder: "lab-deploy"
+    guest_id: "windows2019srv_64Guest"
+    hardware:
+      memory_mb: 8192
+      num_cpus: 4
+    networks: "{{ networks }}"
+    datastore: "{{ datastore }}"
+    cdrom:
+      - controller_number: 0
+        unit_number: 0
+        controller_type: sata
+        state: present
+        type: iso
+        iso_path: "{{ iso_path }}"
+    disk:
+      - size_gb: 100
+        type: thin
+        datastore: esxi-nuc-02-ds
+        controller_number: 1
+        unit_number: 1
+        controller_type: 'lsilogicsas'
+        disk_mode: 'persistent'
+    state: present
 
+- name: Set boot firmware to EFI
+  community.vmware.vmware_guest_boot_manager:
+    hostname: "vc1.vmware.local"
+    username: "{{ lookup('env', 'VMWARE_USER') }}"
+    password: "{{ lookup('env', 'VMWARE_PASS') }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    boot_firmware: efi
+    secure_boot_enabled: false
+  delegate_to: localhost
+
+- name: Power on VM
+  community.vmware.vmware_guest:
+    hostname: "vc1.vmware.local"
+    username: "{{ lookup('env', 'VMWARE_USER') }}"
+    password: "{{ lookup('env', 'VMWARE_PASS') }}"
+    validate_certs: no
+    name: "{{ vm_name }}"
+    state: poweredon
+    wait_for_ip_address: true

@@ -46,6 +46,16 @@
             controller_type: 'lsilogicsas'
             disk_mode: 'persistent'
         state: poweredon
-        boot_firmware: efi
         wait_for_ip_address: true
+
+    - name: Set boot firmware to EFI
+      community.vmware.vmware_guest_boot_manager:
+        hostname: "vc1.vmware.local"
+        username: "{{ lookup('env', 'VMWARE_USER') }}"
+        password: "{{ lookup('env', 'VMWARE_PASS') }}"
+        validate_certs: no
+        name: "{{ vm_name }}"
+        boot_firmware: efi
+        secure_boot_enabled: false
+      delegate_to: localhost
 

@@ -1,1 +1,24 @@
+- name: Create an Active Directory user
+  hosts: 192.168.1.11  # Replace with your target Windows hosts
+  gather_facts: false
+  tasks:
+    - name: Create user 'testuser'
+      community.windows.win_domain_user:
+        name: john.smith
+        firstname: John
+        surname: Smith
+        password: Welcome12345!  # Replace with a strong password
+        state: present
+        groups:
+          - Domain Users
+          - Administrators
+          - "OU=Users,DC=vmware,DC=local"  # Replace with the desired OU path
+        domain_username: administrator@vmware.local  # Replace with your domain admin
+        domain_password: VMware1!  # Replace with the admin password
+        domain_server: vmware.local  # Replace with your domain
+      register: result
 
+    - name: Print user creation status
+      debug:
+        msg: "User testuser created successfully. Result: {{ result }}"
+      when: result.changed

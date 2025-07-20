@@ -3,7 +3,7 @@
   gather_facts: false
   tasks:
     - name: Create user 'testuser'
-      windows.win_domain_user:
+      community.windows.win_domain_user:
         name: john.smith
         firstname: John
         surname: Smith

@@ -1,0 +1,11 @@
+- name: Create domain user
+  community.windows.win_domain_user:
+    name: kadsworld
+    password: "{{ ad_user_password }}"
+    firstname: kads
+    surname: world
+    email: kadsworld@vmware.local
+    path: "CN=Users,DC=vmware,DC=local"
+    enabled: yes
+    password_never_expires: no
+    change_password_at_logon: yes

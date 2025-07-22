@@ -1,24 +1,13 @@
-- name: Create an Active Directory user
-  hosts: 192.168.1.11  # Replace with your target Windows hosts
+---
+- name: create new user
+  hosts: 192.168.1.11
   gather_facts: false
   tasks:
-    - name: Create user 'testuser'
-      community.windows.win_domain_user:
-        name: john.smith
-        firstname: John
-        surname: Smith
-        password: Welcome12345!  # Replace with a strong password
-        state: present
-        groups:
-          - Domain Users
-          - Administrators
-          - "OU=Users,DC=vmware,DC=local"  # Replace with the desired OU path
-        domain_username: administrator@vmware.local  # Replace with your domain admin
-        domain_password: VMware1!  # Replace with the admin password
-        domain_server: vmware.local  # Replace with your domain
-      register: result
+    - name: create new user
+      ansible.windows.win_shell: |
+        New-ADUser –SamAccountName “kadsworld” –DisplayName “kadsworld” –givenName “kads” –Surname “world” –AccountPassword (ReadHost –AsSecureString “Message”) –Enabled $true –Path ‘CN=Users,DC=vmware,DC=local’ –CannotChangePassword $false –ChangePasswordAtLogon $true –PasswordNeverExpires $false -EmailAddress “kadsworld@vmware.local” –EmployeeID “1234567” –Department “IT”
+      register: processes_output
 
-    - name: Print user creation status
+    - name: Print the output of net stop
       debug:
-        msg: "User testuser created successfully. Result: {{ result }}"
-      when: result.changed
+        var: processes_output.stdout_lines

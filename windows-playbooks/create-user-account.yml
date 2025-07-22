@@ -1,11 +1,12 @@
-- name: create new user
+- name: create new user and add to Administrators group
   hosts: 192.168.1.11
   gather_facts: false
   tasks:
     - name: create new user
       ansible.windows.win_shell: |
         $SecurePass = ConvertTo-SecureString "Welcome12345!" -AsPlainText -Force
-        New-ADUser -SamAccountName "kadsworld" `
+        New-ADUser -Name "kadsworld" `
+                   -SamAccountName "kadsworld" `
                    -DisplayName "kadsworld" `
                    -GivenName "kads" `
                    -Surname "world" `
@@ -18,8 +19,17 @@
                    -EmailAddress "kadsworld@vmware.local" `
                    -EmployeeID "1234567" `
                    -Department "IT"
-      register: processes_output
+      register: user_creation_output
 
-    - name: Print the output
+    - name: add user to Administrators group
+      ansible.windows.win_shell: |
+        Add-ADGroupMember -Identity "Administrators" -Members "kadsworld"
+      register: group_add_output
+
+    - name: Print user creation output
       debug:
-        var: processes_output.stdout_lines
+        var: user_creation_output.stdout_lines
+
+    - name: Print group membership output
+      debug:
+        var: group_add_output.stdout_lines

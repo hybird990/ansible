@@ -1,5 +1,5 @@
     ---
-    - host: 192.168.1.11
+    - hosts: 192.168.1.11
       gather_facts: false
       tasks:
         - name: Execute a command using win_command

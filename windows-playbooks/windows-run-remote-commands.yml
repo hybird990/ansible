@@ -1,0 +1,21 @@
+    ---
+    - hosts: 192.168.1.11  # Replace with your target Windows host(s)
+      gather_facts: false
+      tasks:
+        - name: Execute a command using win_command
+          ansible.windows.win_command:
+            cmd: "ipconfig /all"
+          register: ipconfig_output
+
+        - name: Print the output
+          debug:
+            var: ipconfig_output.stdout_lines
+
+        - name: Execute a shell command using win_shell
+          ansible.windows.win_shell:
+            cmd: "net stop "wuauserv""
+          register: processes_output
+
+        - name: Print the output
+          debug:
+            var: processes_output.stdout_lines

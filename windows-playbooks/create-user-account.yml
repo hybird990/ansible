@@ -8,6 +8,6 @@
         New-ADUser –SamAccountName “kadsworld” –DisplayName “kadsworld” –givenName “kads” –Surname “world” –AccountPassword (ReadHost –AsSecureString “Message”) –Enabled $true –Path ‘CN=Users,DC=vmware,DC=local’ –CannotChangePassword $false –ChangePasswordAtLogon $true –PasswordNeverExpires $false -EmailAddress “kadsworld@vmware.local” –EmployeeID “1234567” –Department “IT”
       register: processes_output
 
-    - name: Print the output of net stop
+    - name: Print the output
       debug:
         var: processes_output.stdout_lines

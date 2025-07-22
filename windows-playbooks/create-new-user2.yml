@@ -1,7 +1,7 @@
 - name: Create domain user
   community.windows.win_domain_user:
     name: kadsworld
-    password: "{{ ad_user_password }}"
+    password: "Welcome12345"
     firstname: kads
     surname: world
     email: kadsworld@vmware.local

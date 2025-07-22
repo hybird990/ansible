@@ -12,9 +12,9 @@
       debug:
         var: ipconfig_output.stdout_lines
 
-    - name: Execute a shell command using win_shell
-      ansible.windows.win_shell:
-        cmd: 'Stop-Service -Name "wuauserv" -Force'
+    - name: Stop Windows Update service
+      ansible.windows.win_shell: |
+            Stop-Service -Name "wuauserv" -Force
       register: processes_output
 
     - name: Print the output of net stop

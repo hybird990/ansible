@@ -3,9 +3,9 @@
   hosts: 192.168.1.11
   gather_facts: false
   tasks:
-   - name: get domain controller details
-    ansible.windows.win_shell: |
-            Get-ADDomainController -Filter * | Select-Object Name, IPv4Address, Site, OperatingSysteme
+    - name: get domain controller details
+      ansible.windows.win_shell: |
+        Get-ADDomainController -Filter * | Select-Object Name, IPv4Address, Site, OperatingSystem
       register: processes_output
 
     - name: Print the output of net stop

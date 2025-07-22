@@ -8,6 +8,6 @@
         Get-ADDomainController -Filter * | Select-Object Name, IPv4Address, Site, OperatingSystem
       register: processes_output
 
-    - name: Print the output of net stop
+    - name: Print the output
       debug:
         var: processes_output.stdout_lines

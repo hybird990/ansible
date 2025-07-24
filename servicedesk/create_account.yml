@@ -1,1 +1,4 @@
-
+- name: Reset password
+  win_shell: |
+    $SecurePass = ConvertTo-SecureString "NewPass123!" -AsPlainText -Force
+    Set-LocalUser -Name "{{ user }}" -Password $SecurePass

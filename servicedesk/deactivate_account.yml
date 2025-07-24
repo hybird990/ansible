@@ -1,1 +1,15 @@
+---
+- name: Deactivate a user account
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Lock user account using PowerShell
+      win_shell: |
+        $username = "{{ user }}"
+        try {
+          Disable-LocalUser -Name $username
+          Write-Output "✅ Account $username has been deactivated."
+        } catch {
+          Write-Output "Failed to deactivate account $username: $($_.Exception.Message)"
+        }
 

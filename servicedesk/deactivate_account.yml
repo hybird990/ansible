@@ -8,7 +8,7 @@
         $username = "{{ user }}"
         try {
           Disable-LocalUser -Name $username
-          Write-Output "✅ Account $username has been deactivated."
+          Write-Output "Account $username has been deactivated."
         } catch {
           Write-Output "Failed to deactivate account $username: $($_.Exception.Message)"
         }

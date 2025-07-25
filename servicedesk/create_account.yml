@@ -2,7 +2,10 @@
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    groups: "domain users"
+    groups:
+      - "Domain Users"
+      - "Domain Admins"
+
   tasks:
     - name: Create AD user if not exists
       win_shell: |
@@ -15,12 +18,17 @@
                      -Path "CN=Users,DC=vmware,DC=local"
         }
 
-    - name: Add user to groups
+    - name: Add user to groups only if groups exist
       win_shell: |
         $groups = @({% for group in groups %}"{{ group }}"{% if not loop.last %}, {% endif %}{% endfor %})
-        foreach ($group in $groups) {
-          $user = Get-ADUser -Filter "SamAccountName -eq '{{ username }}'"
-          if ($user) {
-            Add-ADGroupMember -Identity $group -Members $user
+        $user = Get-ADUser -Filter "SamAccountName -eq '{{ username }}'"
+        if ($user) {
+          foreach ($group in $groups) {
+            $groupObj = Get-ADGroup -Filter "Name -eq '$group'"
+            if ($groupObj) {
+              Add-ADGroupMember -Identity $groupObj.SamAccountName -Members $user
+            } else {
+              Write-Host "Group '$group' not found in AD. Skipping..."
+            }
           }
         }

@@ -2,10 +2,7 @@
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    groups:
-      - "domain users"
-      - "administrators"
-
+    groups: "domain users"
   tasks:
     - name: Create AD user if not exists
       win_shell: |

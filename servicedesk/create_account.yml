@@ -3,10 +3,6 @@
   gather_facts: no
 
   tasks:
-    - name: 💬 Display received username
-      debug:
-        msg: "Received user = {{ user }}"
-
     - name: Create user account via PowerShell
       win_shell: |
         $username = "{{ user }}"

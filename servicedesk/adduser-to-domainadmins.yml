@@ -1,0 +1,16 @@
+- name: Add user to Domain Admins group
+  hosts: 192.168.1.11
+  gather_facts: no
+  vars:
+    username: "{{ username }}"
+
+  tasks:
+    - name: Add user to Domain Admins group
+      win_shell: |
+        $username = "{{ username }}"
+        try {
+          Add-ADGroupMember -Identity "Domain Admins" -Members $username -ErrorAction Stop
+          Write-Host "✅ User '$username' successfully added to 'Domain Admins'"
+        } catch {
+          Write-Host "❌ Failed to add '$username' to 'Domain Admins': $($_.Exception.Message)"
+        }

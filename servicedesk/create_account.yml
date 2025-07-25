@@ -2,20 +2,15 @@
   hosts: 192.168.1.11
   gather_facts: no
 
-  vars:
-    # Optional default for testing; remove in production
-    user: "{{ user | default('placeholderUser') }}"
-    password: "{{ password | default('InitialPassword123!') }}"
-
   tasks:
     - name: 💬 Display received username
       debug:
-        msg: "Received user = {{ user }} and password = {{ password }}"
+        msg: "Received user = {{ user }}"
 
     - name: Create user account via PowerShell
       win_shell: |
         $username = "{{ user }}"
-        $password = "{{ password }}"
+        $password = "InitialPassword123!"
 
         try {
           Write-Output "🛠️ Creating user '$username'..."

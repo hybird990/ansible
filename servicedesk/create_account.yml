@@ -2,7 +2,7 @@
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    # You can pass this value via CLI or automation: -e "username=jdoe"
+    # You can pass this in at runtime: -e "username=jdoe"
     username: "{{ username }}"
     groups:
       - "Domain Users"
@@ -18,29 +18,24 @@
                      -AccountPassword $pass `
                      -Enabled $true `
                      -Path "CN=Users,DC=vmware,DC=local"
-          Write-Host "User '{{ username }}' created successfully."
+          Write-Host "✅ User '{{ username }}' created successfully."
         } else {
-          Write-Host "User '{{ username }}' already exists. Skipping creation."
+          Write-Host "ℹ️ User '{{ username }}' already exists. Skipping creation."
         }
 
-    - name: Add user to groups only if groups exist
+    - name: Add user to specified groups
       win_shell: |
         $groups = @({% for group in groups %}"{{ group }}"{% if not loop.last %}, {% endif %}{% endfor %})
         $user = Get-ADUser -Identity "{{ username }}"
         if ($user) {
           foreach ($group in $groups) {
             try {
-              $groupObj = Get-ADGroup -Identity "$group"
-              if ($groupObj) {
-                Add-ADGroupMember -Identity "$group" -Members $user
-                Write-Host "Added '{{ username }}' to '$group'"
-              } else {
-                Write-Host "Group '$group' not found. Skipping..."
-              }
+              Add-ADGroupMember -Identity "$group" -Members $user
+              Write-Host "✅ Added '{{ username }}' to group '$group'"
             } catch {
-              Write-Host "Failed to add '{{ username }}' to '$group': $($_.Exception.Message)"
+              Write-Host "⚠️ Failed to add '{{ username }}' to group '$group': $($_.Exception.Message)"
             }
           }
         } else {
-          Write-Host "User '{{ username }}' not found. Cannot assign groups."
+          Write-Host "🚫 User '{{ username }}' not found. Cannot assign groups."
         }

@@ -2,7 +2,6 @@
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    username: ""
     groups:
       - "all"
       - "ungrouped"

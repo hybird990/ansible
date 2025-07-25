@@ -1,5 +1,5 @@
 - name: Disable AD User
-  hosts: localhost
+  hosts: 192.168.1.11
   gather_facts: no
   vars:
     username: "{{ username }}"

@@ -1,21 +1,25 @@
 - name: Create AD User with Groups
-  hosts: 192.168.1.11
+  hosts: windows
   gather_facts: no
   vars:
     username: "kadworld"
     groups:
-      - "Domain Users"
-      - "IT Department"
+      - "all"
+      - "ungrouped"
   tasks:
-    - name: Create AD user and add to groups
+    - name: Create AD user
       win_shell: |
-        $pass = ConvertTo-SecureString -AsPlainText "Welcome123!" -Force
-        New-ADUser -Name "{{ username }}" `
-                   -SamAccountName "{{ username }}" `
-                   -AccountPassword $pass `
-                   -Enabled $true `
-                   -Path "CN=Users,DC=yourdomain,DC=local"
-        
+        if (-not (Get-ADUser -Identity "{{ username }}" -ErrorAction SilentlyContinue)) {
+          $pass = ConvertTo-SecureString -AsPlainText "Welcome123!" -Force
+          New-ADUser -Name "{{ username }}" `
+                     -SamAccountName "{{ username }}" `
+                     -AccountPassword $pass `
+                     -Enabled $true `
+                     -Path "OU=Users,DC=vmware,DC=local"
+        }
+
+    - name: Add user to groups
+      win_shell: |
         $groups = @({% for group in groups %}"{{ group }}"{% if not loop.last %}, {% endif %}{% endfor %})
         foreach ($group in $groups) {
           Add-ADGroupMember -Identity $group -Members "{{ username }}"

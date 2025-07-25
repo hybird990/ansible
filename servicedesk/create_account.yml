@@ -1,5 +1,5 @@
 - name: Create AD User with Groups
-  hosts: ad_server
+  hosts: localhost
   gather_facts: no
   vars:
     username: "{{ username }}"

@@ -2,14 +2,15 @@
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    username: "kadworld"
+    username: ""
     groups:
       - "all"
       - "ungrouped"
+
   tasks:
-    - name: Create AD user
+    - name: Create AD user if not exists
       win_shell: |
-        if (-not (Get-ADUser -Identity "{{ username }}" -ErrorAction SilentlyContinue)) {
+        if (-not (Get-ADUser -Filter "SamAccountName -eq '{{ username }}'")) {
           $pass = ConvertTo-SecureString -AsPlainText "Welcome123!" -Force
           New-ADUser -Name "{{ username }}" `
                      -SamAccountName "{{ username }}" `
@@ -22,5 +23,8 @@
       win_shell: |
         $groups = @({% for group in groups %}"{{ group }}"{% if not loop.last %}, {% endif %}{% endfor %})
         foreach ($group in $groups) {
-          Add-ADGroupMember -Identity $group -Members "{{ username }}"
+          $user = Get-ADUser -Filter "SamAccountName -eq '{{ username }}'"
+          if ($user) {
+            Add-ADGroupMember -Identity $group -Members $user
+          }
         }

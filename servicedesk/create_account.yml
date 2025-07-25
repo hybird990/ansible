@@ -6,7 +6,7 @@
     username: "{{ username }}"
     groups:
       - "Domain Users"
-      - "Domain Admins"
+      - "test group"
 
   tasks:
     - name: Create AD user if not exists

@@ -3,8 +3,8 @@
   gather_facts: no
   vars:
     groups:
-      - "all"
-      - "ungrouped"
+      - "domain users"
+      - "administrators"
 
   tasks:
     - name: Create AD user if not exists

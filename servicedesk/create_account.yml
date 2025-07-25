@@ -2,7 +2,6 @@
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    # You can pass this in at runtime: -e "username=jdoe"
     username: "{{ username }}"
     groups:
       - "Domain Users"
@@ -11,31 +10,34 @@
   tasks:
     - name: Create AD user if not exists
       win_shell: |
-        if (-not (Get-ADUser -Filter "SamAccountName -eq '{{ username }}'")) {
+        $username = "{{ username }}"
+        $user = Get-ADUser -Filter "SamAccountName -eq '$username'"
+        if (-not $user) {
           $pass = ConvertTo-SecureString -AsPlainText "Welcome123!" -Force
-          New-ADUser -Name "{{ username }}" `
-                     -SamAccountName "{{ username }}" `
+          New-ADUser -Name $username `
+                     -SamAccountName $username `
                      -AccountPassword $pass `
                      -Enabled $true `
                      -Path "CN=Users,DC=vmware,DC=local"
-          Write-Host "✅ User '{{ username }}' created successfully."
+          Write-Host "✅ User '$username' created successfully."
         } else {
-          Write-Host "ℹ️ User '{{ username }}' already exists. Skipping creation."
+          Write-Host "ℹ️ User '$username' already exists. Skipping creation."
         }
 
     - name: Add user to specified groups
       win_shell: |
+        $username = "{{ username }}"
         $groups = @({% for group in groups %}"{{ group }}"{% if not loop.last %}, {% endif %}{% endfor %})
-        $user = Get-ADUser -Identity "{{ username }}"
-        if ($user) {
-          foreach ($group in $groups) {
-            try {
-              Add-ADGroupMember -Identity "$group" -Members $user
-              Write-Host "✅ Added '{{ username }}' to group '$group'"
-            } catch {
-              Write-Host "⚠️ Failed to add '{{ username }}' to group '$group': $($_.Exception.Message)"
+        foreach ($group in $groups) {
+          try {
+            $groupObj = Get-ADGroup -Identity $group
+            if ($groupObj) {
+              Add-ADGroupMember -Identity $groupObj.Name -Members $username
+              Write-Host "✅ Added '$username' to group '$($groupObj.Name)'"
+            } else {
+              Write-Host "❌ Group '$group' not found in AD."
             }
+          } catch {
+            Write-Host "⚠️ Failed to add '$username' to group '$group': $($_.Exception.Message)"
           }
-        } else {
-          Write-Host "🚫 User '{{ username }}' not found. Cannot assign groups."
         }

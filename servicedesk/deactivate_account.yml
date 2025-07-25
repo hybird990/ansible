@@ -1,15 +1,9 @@
----
-- name: Deactivate a user account
-  hosts: all
+- name: Disable AD User
+  hosts: ad_server
   gather_facts: no
+  vars:
+    username: "{{ username }}"
   tasks:
-    - name: Lock user account using PowerShell
+    - name: Disable account
       win_shell: |
-        $username = "{{ user }}"
-        try {
-          Disable-LocalUser -Name $username
-          Write-Output "Account $username has been deactivated."
-        } catch {
-          Write-Output "Failed to deactivate account $username: $($_.Exception.Message)"
-        }
-
+        Disable-ADAccount -Identity {{ username }}

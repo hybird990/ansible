@@ -15,7 +15,7 @@
                      -SamAccountName "{{ username }}" `
                      -AccountPassword $pass `
                      -Enabled $true `
-                     -Path "OU=Users,DC=vmware,DC=local"
+                     -Path "CN=Users,DC=vmware,DC=local"
         }
 
     - name: Add user to groups

@@ -2,7 +2,8 @@
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    username: "{{ username }}"  # This should be passed in via CLI or external input
+    # You can pass this value via CLI or automation: -e "username=jdoe"
+    username: "{{ username }}"
     groups:
       - "Domain Users"
       - "Domain Admins"
@@ -17,6 +18,9 @@
                      -AccountPassword $pass `
                      -Enabled $true `
                      -Path "CN=Users,DC=vmware,DC=local"
+          Write-Host "User '{{ username }}' created successfully."
+        } else {
+          Write-Host "User '{{ username }}' already exists. Skipping creation."
         }
 
     - name: Add user to groups only if groups exist
@@ -29,9 +33,14 @@
               $groupObj = Get-ADGroup -Identity "$group"
               if ($groupObj) {
                 Add-ADGroupMember -Identity "$group" -Members $user
+                Write-Host "Added '{{ username }}' to '$group'"
+              } else {
+                Write-Host "Group '$group' not found. Skipping..."
               }
             } catch {
-              Write-Host "Unable to add '{{ username }}' to group '$group': $_"
+              Write-Host "Failed to add '{{ username }}' to '$group': $($_.Exception.Message)"
             }
           }
+        } else {
+          Write-Host "User '{{ username }}' not found. Cannot assign groups."
         }

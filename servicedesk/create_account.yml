@@ -1,6 +1,7 @@
 - name: Create a new user account
   hosts: 192.168.1.11
   gather_facts: no
+
   tasks:
     - name: Create user account via PowerShell
       win_shell: |
@@ -9,11 +10,20 @@
 
         try {
           Write-Output "🛠️ Creating user '$username'..."
-          New-LocalUser -Name $username -Password (ConvertTo-SecureString $password -AsPlainText -Force) -FullName $username -AccountNeverExpires $true
-          Add-LocalGroupMember -Group "Users" -Member $username
-          Write-Output "✅ New account '$username' has been created."
+
+          if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
+            Write-Output "⚠️ User '$username' already exists."
+          } else {
+            New-LocalUser -Name $username `
+              -Password (ConvertTo-SecureString $password -AsPlainText -Force) `
+              -FullName $username `
+              -AccountNeverExpires:$true
+            Add-LocalGroupMember -Group "Users" -Member $username
+            Write-Output "✅ New account '$username' has been created."
+          }
+
         } catch {
-          Write-Output "❌ Failed to create account ${username}: $($_.Exception.Message)"
+          Write-Output "❌ Failed to create account '$username': $($_.Exception.Message)"
         }
       register: result
 

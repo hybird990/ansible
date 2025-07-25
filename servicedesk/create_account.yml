@@ -1,32 +1,14 @@
-- name: Create a new user account
-  hosts: 192.168.1.11
+- name: Create AD User with Groups
+  hosts: ad_server
   gather_facts: no
-
+  vars:
+    username: "{{ username }}"
+    groups: ["Domain Users", "IT Department"]
   tasks:
-    - name: Create user account via PowerShell
+    - name: Create AD user and add to groups
       win_shell: |
-        $username = "{{ user }}"
-        $password = "InitialPassword123!"
-
-        try {
-          Write-Output "🛠️ Creating user '$username'..."
-
-          if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
-            Write-Output "⚠️ User '$username' already exists."
-          } else {
-            New-LocalUser -Name $username `
-              -Password (ConvertTo-SecureString $password -AsPlainText -Force) `
-              -FullName $username `
-              -AccountNeverExpires:$true
-            Add-LocalGroupMember -Group "Users" -Member $username
-            Write-Output "✅ New account '$username' has been created."
-          }
-
-        } catch {
-          Write-Output "❌ Failed to create account '$username': $($_.Exception.Message)"
+        $pass = ConvertTo-SecureString -AsPlainText "Welcome123!" -Force
+        New-ADUser -Name "{{ username }}" -SamAccountName "{{ username }}" -AccountPassword $pass -Enabled $true -Path "CN=Users,DC=yourdomain,DC=local"
+        foreach ($group in @({{ groups | join(',') }})) {
+          Add-ADGroupMember -Identity $group -Members "{{ username }}"
         }
-      register: result
-
-    - name: Show result
-      debug:
-        var: result.stdout_lines

@@ -1,16 +1,22 @@
----
 - name: Create a new user account
-  hosts: all
+  hosts: windows
   gather_facts: no
   tasks:
     - name: Create user account via PowerShell
       win_shell: |
         $username = "{{ user }}"
-        $password = "{{ password }}"
+        $password = "InitialPassword123!"
+
         try {
+          Write-Output "🛠️ Creating user '$username'..."
           New-LocalUser -Name $username -Password (ConvertTo-SecureString $password -AsPlainText -Force) -FullName $username -AccountNeverExpires $true
           Add-LocalGroupMember -Group "Users" -Member $username
-          Write-Output "New account $username has been created."
+          Write-Output "✅ New account '$username' has been created."
         } catch {
-          Write-Output "Failed to create account ${username}: $($_.Exception.Message)"
+          Write-Output "❌ Failed to create account ${username}: $($_.Exception.Message)"
         }
+      register: result
+
+    - name: Show result
+      debug:
+        var: result.stdout_lines

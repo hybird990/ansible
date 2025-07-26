@@ -1,0 +1,4 @@
+windows box
+Set-ExecutionPolicy RemoteSigned -Force
+Enable-PSRemoting -Force
+New-NetFirewallRule -Name "WinRM-HTTP" -DisplayName "WinRM over HTTP" -Protocol TCP -LocalPort 5985 -Action Allow

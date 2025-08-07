@@ -1,0 +1,26 @@
+Import-Module VMware.PowerCLI
+
+Connect-VIServer -Server "192.168.1.13" -User "administrator@vsphere.local" -Password "VMware1!"
+
+$vms = Import-Csv -Path "C:\temp\vm_list.csv"
+$attributeName = "Environment"
+
+if (-Not (Get-CustomAttribute -Name $attributeName -ErrorAction SilentlyContinue)) {
+    New-CustomAttribute -Name $attributeName -TargetType VirtualMachine
+}
+
+foreach ($vmEntry in $vms) {
+    $vmName = $vmEntry.Name
+    if ([string]::IsNullOrWhiteSpace($vmName)) { continue }
+
+    try {
+        $vm = Get-VM -Name $vmName -ErrorAction Stop
+        Set-Annotation -Entity $vm -CustomAttribute $attributeName -Value "NONPROD"
+        Write-Host "Updated '$vmName'"
+    } catch {
+        Write-Warning "Could not update '$vmName': $_"
+    }
+}
+
+Disconnect-VIServer -Confirm:$false
+Write-Host "Script complete."

@@ -5,20 +5,20 @@
     - name: create new user
       ansible.windows.win_shell: |
         $SecurePass = ConvertTo-SecureString "Welcome12345!" -AsPlainText -Force
-        New-ADUser -Name "kadsworld" `
-                   -SamAccountName "kadsworld" `
-                   -DisplayName "kadsworld" `
-                   -GivenName "kads" `
-                   -Surname "world" `
+        New-ADUser -Name {{ firstandlast }} `
+                   -SamAccountName {{ username }} `
+                   -DisplayName {{ firstandlastDisplayName }} `
+                   -GivenName "{{ givenname }}" `
+                   -Surname "{{ surname }}" `
                    -AccountPassword $SecurePass `
                    -Enabled $true `
                    -Path "CN=Users,DC=vmware,DC=local" `
                    -CannotChangePassword $false `
                    -ChangePasswordAtLogon $true `
                    -PasswordNeverExpires $false `
-                   -EmailAddress "kadsworld@vmware.local" `
-                   -EmployeeID "1234567" `
-                   -Department "IT"
+                   -EmailAddress "{{ emailaddress }}" `
+                   -EmployeeID "{{ employeeid }}" `
+                   -Department "{{ department }}"
       register: user_creation_output
 
     - name: add user to Administrators group

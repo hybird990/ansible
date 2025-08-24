@@ -21,11 +21,12 @@
                    -Department "{{ department }}"
       register: user_creation_output
 
-    - name: add user to group group
-      ansible.windows.win_shell: |
-        Add-ADGroupMember -Identity "CN="{{ adgroup }}",OU=Users,DC=vmware,DC=local" -Members "{{ username }}"
-      register: group_add_output
-
+- name: add user to group
+  ansible.windows.win_shell: |
+    $groupDN = "CN={{ adgroup }},OU=Users,DC=vmware,DC=local"
+    Add-ADGroupMember -Identity $groupDN -Members "{{ username }}"
+  register: group_add_output
+  
     - name: Print user creation output
       debug:
         var: user_creation_output.stdout_lines

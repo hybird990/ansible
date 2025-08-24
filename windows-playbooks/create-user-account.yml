@@ -21,9 +21,9 @@
                    -Department "{{ department }}"
       register: user_creation_output
 
-    - name: add user to Administrators group
+    - name: add user to group group
       ansible.windows.win_shell: |
-        Add-ADGroupMember -Identity "Administrators" -Members "kadsworld"
+        Add-ADGroupMember -Identity "{{ adgroup }}" -Members "{{ username }}"
       register: group_add_output
 
     - name: Print user creation output

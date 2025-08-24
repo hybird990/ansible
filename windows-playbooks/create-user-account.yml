@@ -23,7 +23,7 @@
 
     - name: add user to group group
       ansible.windows.win_shell: |
-        Add-ADGroupMember -Identity "{{ adgroup }}" -Members "{{ username }}"
+        Add-ADGroupMember -Identity "CN="{{ adgroup }}",OU=Users,DC=vmware,DC=local" -Members "{{ username }}"
       register: group_add_output
 
     - name: Print user creation output

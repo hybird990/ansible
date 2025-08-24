@@ -5,9 +5,9 @@
     - name: create new user
       ansible.windows.win_shell: |
         $SecurePass = ConvertTo-SecureString "Welcome12345!" -AsPlainText -Force
-        New-ADUser -Name {{ firstandlast }} `
-                   -SamAccountName {{ username }} `
-                   -DisplayName {{ firstandlastDisplayName }} `
+        New-ADUser -Name "{{ firstandlast }}" `
+                   -SamAccountName "{{ username }}" `
+                   -DisplayName "{{ firstandlastDisplayName }}" `
                    -GivenName "{{ givenname }}" `
                    -Surname "{{ surname }}" `
                    -AccountPassword $SecurePass `

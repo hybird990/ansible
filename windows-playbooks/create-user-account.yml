@@ -1,8 +1,8 @@
-- name: create new user and add to group
+- name: Create new user and add to group
   hosts: 192.168.1.11
   gather_facts: false
   tasks:
-    - name: create new user
+    - name: Create new user
       ansible.windows.win_shell: |
         $SecurePass = ConvertTo-SecureString "Welcome12345!" -AsPlainText -Force
         New-ADUser -Name "{{ firstandlast }}" `
@@ -21,16 +21,16 @@
                    -Department "{{ department }}"
       register: user_creation_output
 
-- name: add user to group
-  ansible.windows.win_shell: |
-    $groupDN = "CN={{ adgroup }},OU=Users,DC=vmware,DC=local"
-    Add-ADGroupMember -Identity $groupDN -Members "{{ username }}"
-  register: group_add_output
-  
+    - name: Add user to group
+      ansible.windows.win_shell: |
+        $groupDN = "CN={{ adgroup }},OU=Users,DC=vmware,DC=local"
+        Add-ADGroupMember -Identity $groupDN -Members "{{ username }}"
+      register: group_add_output
+
     - name: Print user creation output
-      debug:
+      ansible.builtin.debug:
         var: user_creation_output.stdout_lines
 
     - name: Print group membership output
-      debug:
+      ansible.builtin.debug:
         var: group_add_output.stdout_lines

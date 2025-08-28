@@ -20,7 +20,7 @@
     csr_copy_path: "C:\\temp\\IssuedCerts\\copied_{{ common_name }}.req"
     crt_path: "C:\\temp\\IssuedCerts\\{{ common_name }}.crt"
     pfx_path: "C:\\temp\\IssuedCerts\\{{ common_name }}.pfx"
-    pfx_password: "StrongPassword123!"  # Override via --extra-vars
+    pfx_password: "StrongPassword123!"
     ca_name: "addns.vmware.local\\vmware-ADDNS-CA"
     cert_template: "webserver1"
 
@@ -54,7 +54,7 @@
 
         $inf = @"
 [NewRequest]
-Subject = "C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN"
+Subject = ""C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN""
 KeySpec = 1
 KeyLength = 2048
 Exportable = TRUE
@@ -63,7 +63,7 @@ SMIME = FALSE
 PrivateKeyArchive = FALSE
 UserProtected = FALSE
 UseExistingKeySet = FALSE
-ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
+ProviderName = ""Microsoft RSA SChannel Cryptographic Provider""
 ProviderType = 12
 RequestType = PKCS10
 KeyUsage = 0xa0
@@ -72,7 +72,7 @@ KeyUsage = 0xa0
 CertificateTemplate=$Template
 
 [Extensions]
-2.5.29.17 = "{text}"
+2.5.29.17 = ""{text}""
 "@
 
         foreach ($dns in $SanDNS) {
@@ -107,3 +107,19 @@ CertificateTemplate=$Template
 
         certreq -accept $CertPath
       args:
+        executable: powershell
+
+    - name: Export signed certificate and private key to PFX
+      win_shell: |
+        $SubjectMatch = "CN={{ common_name }}"
+        $Cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*$SubjectMatch*" } | Sort-Object NotBefore -Descending | Select-Object -First 1
+
+        if (-not $Cert) {
+            Write-Error "Certificate not found in local store for CN={{ common_name }}"
+            exit 1
+        }
+
+        $pwd = ConvertTo-SecureString -String "{{ pfx_password }}" -Force -AsPlainText
+        Export-PfxCertificate -Cert $Cert -FilePath "{{ pfx_path }}" -Password $pwd -Force
+      args:
+        executable: powershell

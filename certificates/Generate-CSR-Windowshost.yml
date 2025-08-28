@@ -1,10 +1,7 @@
 ---
-- name: Generate CSR on Windows host
+- name: Generate CSR on Windows host using PowerShell
   hosts: 192.168.1.11
   gather_facts: no
-
-  collections:
-    - community.windows
 
   vars:
     country: "{{ country }}"
@@ -23,66 +20,62 @@
     csr_path: "C:\\temp\\csr_request.req"
 
   tasks:
-    - name: Ensure CSR directory exists
-      community.windows.win_file:
-        path: "C:\\temp"
-        state: directory
+    - name: Run PowerShell to generate CSR
+      win_shell: |
+        $Country = "{{ country }}"
+        $State = "{{ state }}"
+        $City = "{{ city }}"
+        $Organization = "{{ organization }}"
+        $Unit = "{{ unit }}"
+        $CommonName = "{{ common_name }}"
+        $SanDNS = @({% for dns in san_dns if dns %}"{{ dns }}",{% endfor %})
+        $SanIPs = @({% for ip in san_ips if ip %}"{{ ip }}",{% endfor %})
 
-    - name: Create empty INF file
-      community.windows.win_file:
-        path: "{{ inf_path }}"
-        state: touch
+        $InfPath = "{{ inf_path }}"
+        $CsrPath = "{{ csr_path }}"
 
-    - name: Add base CSR config to INF file
-      community.windows.win_lineinfile:
-        path: "{{ inf_path }}"
-        line: "{{ item }}"
-        create: yes
-      loop:
-        - "[Version]"
-        - "Signature=\"$Windows NT$\""
-        - ""
-        - "[NewRequest]"
-        - "Subject = \"C={{ country }}, ST={{ state }}, L={{ city }}, O={{ organization }}, OU={{ unit }}, CN={{ common_name }}\""
-        - "KeySpec = 1"
-        - "KeyLength = 2048"
-        - "Exportable = TRUE"
-        - "MachineKeySet = TRUE"
-        - "SMIME = FALSE"
-        - "PrivateKeyArchive = FALSE"
-        - "UserProtected = FALSE"
-        - "UseExistingKeySet = FALSE"
-        - "ProviderName = \"Microsoft RSA SChannel Cryptographic Provider\""
-        - "ProviderType = 12"
-        - "RequestType = PKCS10"
-        - "KeyUsage = 0xa0"
-        - ""
-        - "[Extensions]"
-        - "2.5.29.17 = \"{text}\""
+        if (-not (Test-Path "C:\\temp")) {
+            New-Item -Path "C:\\temp" -ItemType Directory | Out-Null
+        }
 
-    - name: Add DNS SAN entries
-      community.windows.win_lineinfile:
-        path: "{{ inf_path }}"
-        line: "_continue_ = \"dns={{ item }}\""
-        insertafter: EOF
-      loop: "{{ san_dns }}"
-      when: item | length > 0
+        $infContent = @"
+[Version]
+Signature="\$Windows NT$"
 
-    - name: Add IP SAN entries
-      community.windows.win_lineinfile:
-        path: "{{ inf_path }}"
-        line: "_continue_ = \"ipaddress={{ item }}\""
-        insertafter: EOF
-      loop: "{{ san_ips }}"
-      when: item | length > 0
+[NewRequest]
+Subject = "C=$Country, ST=$State, L=$City, O=$Organization, OU=$Unit, CN=$CommonName"
+KeySpec = 1
+KeyLength = 2048
+Exportable = TRUE
+MachineKeySet = TRUE
+SMIME = FALSE
+PrivateKeyArchive = FALSE
+UserProtected = FALSE
+UseExistingKeySet = FALSE
+ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
+ProviderType = 12
+RequestType = PKCS10
+KeyUsage = 0xa0
 
-    - name: Generate CSR using certreq
-      community.windows.win_shell: certreq -new "{{ inf_path }}" "{{ csr_path }}"
+[Extensions]
+2.5.29.17 = "{text}"
+"@
+
+        foreach ($dns in $SanDNS) {
+            $infContent += "`n_continue_ = \"dns=$dns\""
+        }
+        foreach ($ip in $SanIPs) {
+            $infContent += "`n_continue_ = \"ipaddress=$ip\""
+        }
+
+        Set-Content -Path $InfPath -Value $infContent -Encoding ASCII
+        certreq -new $InfPath $CsrPath
+
       args:
-        executable: cmd
+        executable: powershell
 
     - name: Fetch CSR file to controller
-      community.windows.win_fetch:
+      win_fetch:
         src: "{{ csr_path }}"
         dest: "./csr_files/{{ common_name }}.req"
         flat: yes

@@ -24,34 +24,46 @@
         path: "{{ inf_path }}"
         state: touch
 
-    - name: Append CSR configuration to INF file
-      win_shell: |
-        Add-Content -Path "{{ inf_path }}" -Value "[Version]"
-        Add-Content -Path "{{ inf_path }}" -Value "Signature=`"$Windows NT$`""
-        Add-Content -Path "{{ inf_path }}" -Value ""
-        Add-Content -Path "{{ inf_path }}" -Value "[NewRequest]"
-        Add-Content -Path "{{ inf_path }}" -Value "Subject = `"C={{ country }}, ST={{ state }}, L={{ city }}, O={{ organization }}, OU={{ unit }}, CN={{ common_name }}`""
-        Add-Content -Path "{{ inf_path }}" -Value "KeySpec = 1"
-        Add-Content -Path "{{ inf_path }}" -Value "KeyLength = 2048"
-        Add-Content -Path "{{ inf_path }}" -Value "Exportable = TRUE"
-        Add-Content -Path "{{ inf_path }}" -Value "MachineKeySet = TRUE"
-        Add-Content -Path "{{ inf_path }}" -Value "SMIME = FALSE"
-        Add-Content -Path "{{ inf_path }}" -Value "PrivateKeyArchive = FALSE"
-        Add-Content -Path "{{ inf_path }}" -Value "UserProtected = FALSE"
-        Add-Content -Path "{{ inf_path }}" -Value "UseExistingKeySet = FALSE"
-        Add-Content -Path "{{ inf_path }}" -Value "ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`""
-        Add-Content -Path "{{ inf_path }}" -Value "ProviderType = 12"
-        Add-Content -Path "{{ inf_path }}" -Value "RequestType = PKCS10"
-        Add-Content -Path "{{ inf_path }}" -Value "KeyUsage = 0xa0"
-        Add-Content -Path "{{ inf_path }}" -Value ""
-        Add-Content -Path "{{ inf_path }}" -Value "[Extensions]"
-        Add-Content -Path "{{ inf_path }}" -Value "2.5.29.17 = `"{text}`""
-{% for dns in san_dns %}
-        Add-Content -Path "{{ inf_path }}" -Value "_continue_ = `"dns={{ dns }}`""
-{% endfor %}
-{% for ip in san_ips %}
-        Add-Content -Path "{{ inf_path }}" -Value "_continue_ = `"ipaddress={{ ip }}`""
-{% endfor %}
+    - name: Add base CSR config to INF file
+      win_lineinfile:
+        path: "{{ inf_path }}"
+        line: "{{ item }}"
+        create: yes
+      loop:
+        - "[Version]"
+        - "Signature=\"$Windows NT$\""
+        - ""
+        - "[NewRequest]"
+        - "Subject = \"C={{ country }}, ST={{ state }}, L={{ city }}, O={{ organization }}, OU={{ unit }}, CN={{ common_name }}\""
+        - "KeySpec = 1"
+        - "KeyLength = 2048"
+        - "Exportable = TRUE"
+        - "MachineKeySet = TRUE"
+        - "SMIME = FALSE"
+        - "PrivateKeyArchive = FALSE"
+        - "UserProtected = FALSE"
+        - "UseExistingKeySet = FALSE"
+        - "ProviderName = \"Microsoft RSA SChannel Cryptographic Provider\""
+        - "ProviderType = 12"
+        - "RequestType = PKCS10"
+        - "KeyUsage = 0xa0"
+        - ""
+        - "[Extensions]"
+        - "2.5.29.17 = \"{text}\""
+
+    - name: Add DNS SAN entries
+      win_lineinfile:
+        path: "{{ inf_path }}"
+        line: "_continue_ = \"dns={{ item }}\""
+        insertafter: EOF
+      loop: "{{ san_dns }}"
+
+    - name: Add IP SAN entries
+      win_lineinfile:
+        path: "{{ inf_path }}"
+        line: "_continue_ = \"ipaddress={{ item }}\""
+        insertafter: EOF
+      loop: "{{ san_ips }}"
 
     - name: Generate CSR using certreq
       win_shell: certreq -new "{{ inf_path }}" "{{ csr_path }}"

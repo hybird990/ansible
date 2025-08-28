@@ -20,9 +20,9 @@
     csr_copy_path: "C:\\temp\\copied_{{ common_name }}.req"
     crt_path: "C:\\temp\\{{ common_name }}.crt"
     pfx_path: "C:\\temp\\{{ common_name }}.pfx"
-    pfx_password: "StrongPassword123!"  # Can be overridden via --extra-vars
+    pfx_password: "StrongPassword123!"  # Override using --extra-vars
     ca_name: "addns.vmware.local\\vmware-ADDNS-CA"
-    cert_template: "webserver1"  # Change to a template that supports auto-issuance
+    cert_template: "webserver1"
 
   tasks:
 
@@ -93,23 +93,21 @@
         $CAName = "{{ ca_name }}"
         $Template = "{{ cert_template }}"
 
-        # Submit the request
+        # Submit the request and capture output
         $output = certreq -submit -config "$CAName" -attrib "CertificateTemplate=$Template" $CsrPath 2>&1
 
         if ($output -match "RequestId: (\d+)") {
             $RequestId = $matches[1]
             Write-Host "Request ID: $RequestId"
         } else {
-            Write-Host "CSR submitted but response did not include Request ID. Output:"
+            Write-Host "CSR submitted but no Request ID found."
             Write-Host $output
             exit 1
         }
 
-        # Poll for certificate issuance
+        # Wait for certificate to be issued
         $Issued = $false
-        $Retries = 20
-        $SleepSec = 30
-        for ($i = 0; $i -lt $Retries; $i++) {
+        for ($i = 0; $i -lt 10; $i++) {
             $status = certutil -view -restrict "RequestID=$RequestId" -out RequestDisposition 2>&1
             if ($status -match "RequestDisposition: (\d+)") {
                 $disp = [int]$matches[1]
@@ -118,33 +116,34 @@
                     break
                 }
             }
-            Start-Sleep -Seconds $SleepSec
+            Start-Sleep -Seconds 10
         }
 
         if (-not $Issued) {
-            Write-Host "Certificate was not issued within timeout. Exiting."
+            Write-Host "Certificate was not issued within timeout."
             exit 1
         }
 
-        # Retrieve and save certificate
+        # Retrieve and save cert
         certreq -retrieve $RequestId $CertPath
-
-        # Accept the certificate into local store
         certreq -accept $CertPath
       args:
         executable: powershell
 
-    - name: Export signed certificate and private key to PFX
+    - name: Export certificate and private key to PFX
       win_shell: |
-        $SubjectMatch = "CN={{ common_name }}"
-        $Cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*$SubjectMatch*" } | Sort-Object NotBefore -Descending | Select-Object -First 1
+        $CN = "{{ common_name }}"
+        $pwd = ConvertTo-SecureString -String "{{ pfx_password }}" -Force -AsPlainText
+        $cert = Get-ChildItem -Path Cert:\LocalMachine\My |
+                Where-Object { $_.Subject -like "*CN=$CN*" } |
+                Sort-Object NotBefore -Descending |
+                Select-Object -First 1
 
-        if (-not $Cert) {
-            Write-Error "Certificate not found in local store for CN={{ common_name }}"
+        if (-not $cert) {
+            Write-Error "No certificate found in store for CN=$CN"
             exit 1
         }
 
-        $pwd = ConvertTo-SecureString -String "{{ pfx_password }}" -Force -AsPlainText
-        Export-PfxCertificate -Cert $Cert -FilePath "{{ pfx_path }}" -Password $pwd -Force
+        Export-PfxCertificate -Cert $cert -FilePath "{{ pfx_path }}" -Password $pwd -Force
       args:
         executable: powershell

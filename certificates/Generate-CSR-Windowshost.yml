@@ -6,12 +6,15 @@
     country: "{{ country }}"
     state: "{{ state }}"
     city: "{{ city }}"
-    organization: "{{ org }}"
+    organization: "{{ organization }}"
     unit: "{{ unit }}"
-    common_name: "{{ cname }}"
-    san_entries:
+    common_name: "{{ common_name }}"
+    san_dns:
       - "{{ san1 }}"
       - "{{ san2 }}"
+    san_ips:
+      - "{{ ip1 }}"
+      - "{{ ip2 }}"
     inf_path: "C:\\temp\\csr_request.inf"
     csr_path: "C:\\temp\\csr_request.req"
 
@@ -39,8 +42,11 @@
 
           [Extensions]
           2.5.29.17 = "{text}"
-{% for san in san_entries %}
-          _continue_ = "dns={{ san }}"
+{% for dns in san_dns %}
+          _continue_ = "dns={{ dns }}"
+{% endfor %}
+{% for ip in san_ips %}
+          _continue_ = "ipaddress={{ ip }}"
 {% endfor %}
         dest: "{{ inf_path }}"
 

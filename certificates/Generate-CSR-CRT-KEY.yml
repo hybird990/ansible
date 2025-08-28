@@ -15,8 +15,8 @@
     san_ips:
       - "{{ ip1 | default('') }}"
       - "{{ ip2 | default('') }}"
-    inf_path: "C:\\temp\\csr_request.inf"
-    csr_path: "C:\\temp\\csr_request.req"
+    inf_path: "C:\\temp\\IssuedCerts\\csr_request.inf"
+    csr_path: "C:\\temp\\IssuedCerts\\csr_request.req"
     csr_copy_path: "C:\\temp\\copied_{{ common_name }}.req"
     crt_path: "C:\\temp\\IssuedCerts\\{{ common_name }}.crt"
     pfx_path: "C:\\temp\\IssuedCerts\\{{ common_name }}.pfx"
@@ -51,8 +51,8 @@
         if ("{{ ip }}") { $SanIPS += "{{ ip }}" }
         {% endfor %}
 
-        if (-not (Test-Path "C:\\temp")) {
-            New-Item -Path "C:\\temp" -ItemType Directory | Out-Null
+        if (-not (Test-Path "C:\\temp\\IssuedCerts")) {
+            New-Item -Path "C:\\temp\\IssuedCerts" -ItemType Directory | Out-Null
         }
 
         $inf = @"

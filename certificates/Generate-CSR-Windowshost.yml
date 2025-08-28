@@ -2,6 +2,10 @@
 - name: Generate CSR on Windows host
   hosts: 192.168.1.11
   gather_facts: no
+
+  collections:
+    - community.windows
+
   vars:
     country: "{{ country }}"
     state: "{{ state }}"
@@ -10,16 +14,21 @@
     unit: "{{ unit }}"
     common_name: "{{ common_name }}"
     san_dns:
-      - "{{ san1 }}"
-      - "{{ san2 }}"
+      - "{{ san1 | default('') }}"
+      - "{{ san2 | default('') }}"
     san_ips:
-      - "{{ ip1 }}"
-      - "{{ ip2 }}"
+      - "{{ ip1 | default('') }}"
+      - "{{ ip2 | default('') }}"
     inf_path: "C:\\temp\\csr_request.inf"
     csr_path: "C:\\temp\\csr_request.req"
 
   tasks:
-    - name: Ensure INF file exists
+    - name: Ensure CSR directory exists
+      win_file:
+        path: "C:\\temp"
+        state: directory
+
+    - name: Create empty INF file
       win_file:
         path: "{{ inf_path }}"
         state: touch
@@ -57,6 +66,7 @@
         line: "_continue_ = \"dns={{ item }}\""
         insertafter: EOF
       loop: "{{ san_dns }}"
+      when: item | length > 0
 
     - name: Add IP SAN entries
       win_lineinfile:
@@ -64,9 +74,12 @@
         line: "_continue_ = \"ipaddress={{ item }}\""
         insertafter: EOF
       loop: "{{ san_ips }}"
+      when: item | length > 0
 
     - name: Generate CSR using certreq
       win_shell: certreq -new "{{ inf_path }}" "{{ csr_path }}"
+      args:
+        executable: cmd
 
     - name: Fetch CSR file to controller
       win_fetch:

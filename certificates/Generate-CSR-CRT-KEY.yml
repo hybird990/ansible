@@ -1,4 +1,4 @@
-- name: Generate and Sign CSR on Windows CA Host
+- name: Generate, Submit, and Export Certificate from Windows CA
   hosts: 192.168.1.11
   gather_facts: no
 
@@ -86,13 +86,14 @@
       args:
         executable: powershell
 
-    - name: Submit CSR and retrieve issued certificate
+    - name: Submit CSR and retrieve issued certificate (auto-approved)
       win_shell: |
         $CsrPath = "{{ csr_path }}"
         $CertPath = "{{ crt_path }}"
         $CAName = "{{ ca_name }}"
+        $Template = "{{ cert_template }}"
 
-        $output = certreq -submit -config "$CAName" $CsrPath $CertPath 2>&1
+        $output = certreq -submit -attrib "CertificateTemplate:$Template" -config "$CAName" $CsrPath $CertPath 2>&1
 
         if ($output -match "RequestId: (\d+)") {
             Write-Host "Request ID: $($matches[1])"

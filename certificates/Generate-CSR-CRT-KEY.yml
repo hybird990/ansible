@@ -51,14 +51,7 @@
         if ("{{ ip }}") { $SanIPS += "{{ ip }}" }
         {% endfor %}
 
-        if (-not (Test-Path "C:\\temp\\IssuedCerts")) {
-            New-Item -Path "C:\\temp\\IssuedCerts" -ItemType Directory | Out-Null
-        }
-
         $inf = @"
-[Version]
-Signature=`"$Windows NT$`"
-
 [NewRequest]
 Subject = `"C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN`"
 KeySpec = 1

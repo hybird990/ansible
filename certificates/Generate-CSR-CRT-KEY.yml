@@ -94,6 +94,12 @@
       args:
         executable: powershell
 
+    - name: Accept signed certificate into local store
+      win_shell: |
+        certreq -accept "{{ crt_path }}"
+      args:
+        executable: powershell
+
     - name: Export signed certificate and private key to PFX
       win_shell: |
         $Cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*CN={{ common_name }}*" }

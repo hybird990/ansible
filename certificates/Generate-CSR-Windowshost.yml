@@ -28,8 +28,15 @@
         $Organization = "{{ organization }}"
         $Unit = "{{ unit }}"
         $CommonName = "{{ common_name }}"
-        $SanDNS = @({% for dns in san_dns if dns %}"{{ dns }}",{% endfor %})
-        $SanIPs = @({% for ip in san_ips if ip %}"{{ ip }}",{% endfor %})
+        $SanDNS = @()
+        $SanIPs = @()
+
+        {% for dns in san_dns %}
+        if ("{{ dns }}") { $SanDNS += "{{ dns }}" }
+        {% endfor %}
+        {% for ip in san_ips %}
+        if ("{{ ip }}") { $SanIPs += "{{ ip }}" }
+        {% endfor %}
 
         $InfPath = "{{ inf_path }}"
         $CsrPath = "{{ csr_path }}"
@@ -40,7 +47,7 @@
 
         $infContent = @"
 [Version]
-Signature="\$Windows NT$"
+Signature="$Windows NT$"
 
 [NewRequest]
 Subject = "C=$Country, ST=$State, L=$City, O=$Organization, OU=$Unit, CN=$CommonName"
@@ -70,7 +77,6 @@ KeyUsage = 0xa0
 
         Set-Content -Path $InfPath -Value $infContent -Encoding ASCII
         certreq -new $InfPath $CsrPath
-
       args:
         executable: powershell
 

@@ -51,28 +51,35 @@
         if ("{{ ip }}") { $SanIPS += "{{ ip }}" }
         {% endfor %}
 
+        if (-not (Test-Path "C:\\temp\\IssuedCerts")) {
+            New-Item -Path "C:\\temp\\IssuedCerts" -ItemType Directory | Out-Null
+        }
+
         $inf = @"
-        [Version]
-        Signature=`"$Windows NT$`"
+[Version]
+Signature=`"$Windows NT$`"
 
-        [NewRequest]
-        Subject = `"C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN`"
-        KeySpec = 1
-        KeyLength = 2048
-        Exportable = TRUE
-        MachineKeySet = TRUE
-        SMIME = FALSE
-        PrivateKeyArchive = FALSE
-        UserProtected = FALSE
-        UseExistingKeySet = FALSE
-        ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`"
-        ProviderType = 12
-        RequestType = PKCS10
-        KeyUsage = 0xa0
+[NewRequest]
+Subject = `"C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN`"
+KeySpec = 1
+KeyLength = 2048
+Exportable = TRUE
+MachineKeySet = TRUE
+SMIME = FALSE
+PrivateKeyArchive = FALSE
+UserProtected = FALSE
+UseExistingKeySet = FALSE
+ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`"
+ProviderType = 12
+RequestType = PKCS10
+KeyUsage = 0xa0
 
-        [Extensions]
-        2.5.29.17 = `"{text}`"
-        "@
+[RequestAttributes]
+CertificateTemplate={{ cert_template }}
+
+[Extensions]
+2.5.29.17 = `"{text}`"
+"@
 
         foreach ($dns in $SanDNS) {
             $inf += "`n_continue_ = `"dns=$dns`""

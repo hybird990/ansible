@@ -18,13 +18,18 @@
     inf_path: "C:\\temp\\csr_request.inf"
     csr_path: "C:\\temp\\csr_request.req"
     csr_copy_path: "C:\\temp\\copied_{{ common_name }}.req"
-    crt_path: "C:\\temp\\{{ common_name }}.crt"
-    pfx_path: "C:\\temp\\{{ common_name }}.pfx"
-    pfx_password: "StrongPassword123!"  # Override using --extra-vars
+    crt_path: "C:\\temp\\IssuedCerts\\{{ common_name }}.crt"
+    pfx_path: "C:\\temp\\IssuedCerts\\{{ common_name }}.pfx"
+    pfx_password: "StrongPassword123!"  # Can override via --extra-vars
     ca_name: "addns.vmware.local\\vmware-ADDNS-CA"
     cert_template: "webserver1"
 
   tasks:
+
+    - name: Ensure output directory exists
+      win_file:
+        path: C:\temp\IssuedCerts
+        state: directory
 
     - name: Generate CSR using PowerShell
       win_shell: |
@@ -86,64 +91,39 @@
       args:
         executable: powershell
 
-    - name: Submit CSR and wait for certificate issuance
+    - name: Submit CSR and retrieve issued certificate
       win_shell: |
         $CsrPath = "{{ csr_path }}"
         $CertPath = "{{ crt_path }}"
         $CAName = "{{ ca_name }}"
         $Template = "{{ cert_template }}"
 
-        # Submit the request and capture output
-        $output = certreq -submit -config "$CAName" -attrib "CertificateTemplate=$Template" $CsrPath 2>&1
+        $output = certreq -submit -config "$CAName" -attrib "CertificateTemplate=$Template" $CsrPath $CertPath 2>&1
 
         if ($output -match "RequestId: (\d+)") {
-            $RequestId = $matches[1]
-            Write-Host "Request ID: $RequestId"
+            Write-Host "Request ID: $($matches[1])"
+        } elseif (Test-Path $CertPath) {
+            Write-Host "Certificate file saved directly to $CertPath"
         } else {
-            Write-Host "CSR submitted but no Request ID found."
-            Write-Host $output
+            Write-Error "Failed to retrieve certificate."
             exit 1
         }
 
-        # Wait for certificate to be issued
-        $Issued = $false
-        for ($i = 0; $i -lt 10; $i++) {
-            $status = certutil -view -restrict "RequestID=$RequestId" -out RequestDisposition 2>&1
-            if ($status -match "RequestDisposition: (\d+)") {
-                $disp = [int]$matches[1]
-                if ($disp -eq 0x20) {
-                    $Issued = $true
-                    break
-                }
-            }
-            Start-Sleep -Seconds 10
-        }
-
-        if (-not $Issued) {
-            Write-Host "Certificate was not issued within timeout."
-            exit 1
-        }
-
-        # Retrieve and save cert
-        certreq -retrieve $RequestId $CertPath
         certreq -accept $CertPath
       args:
         executable: powershell
 
-    - name: Export certificate and private key to PFX
+    - name: Export signed certificate and private key to PFX
       win_shell: |
-        $CN = "{{ common_name }}"
-        $pwd = ConvertTo-SecureString -String "{{ pfx_password }}" -Force -AsPlainText
-        $cert = Get-ChildItem -Path Cert:\LocalMachine\My |
-                Where-Object { $_.Subject -like "*CN=$CN*" } |
-                Sort-Object NotBefore -Descending |
-                Select-Object -First 1
+        $SubjectMatch = "CN={{ common_name }}"
+        $Cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*$SubjectMatch*" } | Sort-Object NotBefore -Descending | Select-Object -First 1
 
-        if (-not $cert) {
-            Write-Error "No certificate found in store for CN=$CN"
+        if (-not $Cert) {
+            Write-Error "Certificate not found in local store for CN={{ common_name }}"
             exit 1
         }
 
-        Export-PfxCertificate -Cert $cert -FilePath "{{ pfx_path }}" -Password $pwd -Force
+        $pwd = ConvertTo-SecureString -String "{{ pfx_password }}" -Force -AsPlainText
+        Export-PfxCertificate -Cert $Cert -FilePath "{{ pfx_path }}" -Password $pwd -Force
       args:
         executable: powershell

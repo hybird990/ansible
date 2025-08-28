@@ -21,7 +21,7 @@
     crt_path: "C:\\temp\\IssuedCerts\\{{ common_name }}.crt"
     pfx_path: "C:\\temp\\IssuedCerts\\{{ common_name }}.pfx"
     pfx_password: "StrongPassword123!"
-    ca_name: "addns.vmware.local\\vmware-ADDNS-CA"
+    ca_name: "addns.vmware.local\\vmware-ADDNS-CA-1"
     cert_template: "webserver1"
 
   tasks:

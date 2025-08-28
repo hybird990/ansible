@@ -90,7 +90,7 @@
         $CertPath = "{{ crt_path }}"
         $CAName = "{{ ca_name }}"
 
-        certreq -submit -config "$CAName" -attrib "CertificateTemplate:WebServer" $CsrPath $CertPath
+        certreq -submit -config "$CAName" -attrib "CertificateTemplate:webserver1" $CsrPath $CertPath
       args:
         executable: powershell
 

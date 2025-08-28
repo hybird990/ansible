@@ -18,70 +18,65 @@
       - "{{ ip2 | default('') }}"
     inf_path: "C:\\temp\\csr_request.inf"
     csr_path: "C:\\temp\\csr_request.req"
+    csr_copy_path: "C:\\temp\\copied_{{ common_name }}.req"
 
   tasks:
-    - name: Run PowerShell to generate CSR
+    - name: Generate CSR using PowerShell
       win_shell: |
+        $InfPath = "{{ inf_path }}"
+        $CsrPath = "{{ csr_path }}"
         $Country = "{{ country }}"
         $State = "{{ state }}"
         $City = "{{ city }}"
-        $Organization = "{{ organization }}"
+        $Org = "{{ organization }}"
         $Unit = "{{ unit }}"
-        $CommonName = "{{ common_name }}"
+        $CN = "{{ common_name }}"
         $SanDNS = @()
-        $SanIPs = @()
+        $SanIPS = @()
 
         {% for dns in san_dns %}
         if ("{{ dns }}") { $SanDNS += "{{ dns }}" }
         {% endfor %}
         {% for ip in san_ips %}
-        if ("{{ ip }}") { $SanIPs += "{{ ip }}" }
+        if ("{{ ip }}") { $SanIPS += "{{ ip }}" }
         {% endfor %}
-
-        $InfPath = "{{ inf_path }}"
-        $CsrPath = "{{ csr_path }}"
 
         if (-not (Test-Path "C:\\temp")) {
             New-Item -Path "C:\\temp" -ItemType Directory | Out-Null
         }
 
-        $infContent = @"
-        [Version]
-        Signature=`"$Windows NT$`"
+        $inf = @"
+[Version]
+Signature=`"$Windows NT$`"
 
-        [NewRequest]
-        Subject = `"C=$Country, ST=$State, L=$City, O=$Organization, OU=$Unit, CN=$CommonName`"
-        KeySpec = 1
-        KeyLength = 2048
-        Exportable = TRUE
-        MachineKeySet = TRUE
-        SMIME = FALSE
-        PrivateKeyArchive = FALSE
-        UserProtected = FALSE
-        UseExistingKeySet = FALSE
-        ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`"
-        ProviderType = 12
-        RequestType = PKCS10
-        KeyUsage = 0xa0
+[NewRequest]
+Subject = `"C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN`"
+KeySpec = 1
+KeyLength = 2048
+Exportable = TRUE
+MachineKeySet = TRUE
+SMIME = FALSE
+PrivateKeyArchive = FALSE
+UserProtected = FALSE
+UseExistingKeySet = FALSE
+ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`"
+ProviderType = 12
+RequestType = PKCS10
+KeyUsage = 0xa0
 
-        [Extensions]
-        2.5.29.17 = `"{text}`"
-        "@
+[Extensions]
+2.5.29.17 = `"{text}`"
+"@
 
         foreach ($dns in $SanDNS) {
-            $infContent += "`n_continue_ = `"dns=$dns`""
+            $inf += "`n_continue_ = `"dns=$dns`""
         }
-        foreach ($ip in $SanIPs) {
-            $infContent += "`n_continue_ = `"ipaddress=$ip`""
+        foreach ($ip in $SanIPS) {
+            $inf += "`n_continue_ = `"ipaddress=$ip`""
         }
 
-        Set-Content -Path $InfPath -Value $infContent -Encoding ASCII
+        Set-Content -Path $InfPath -Value $inf -Encoding ASCII
         certreq -new $InfPath $CsrPath
+        Copy-Item -Path $CsrPath -Destination "{{ csr_copy_path }}" -Force
       args:
         executable: powershell
-
-    - name: Fetch CSR file to controller
-      win_fetch:
-        src: "{{ csr_path }}"
-        dest: "./csr_files/{{ common_name }}.req"
-        flat: yes

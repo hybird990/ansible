@@ -46,33 +46,33 @@
         }
 
         $infContent = @"
-[Version]
-Signature="$Windows NT$"
+        [Version]
+        Signature=`"$Windows NT$`"
 
-[NewRequest]
-Subject = "C=$Country, ST=$State, L=$City, O=$Organization, OU=$Unit, CN=$CommonName"
-KeySpec = 1
-KeyLength = 2048
-Exportable = TRUE
-MachineKeySet = TRUE
-SMIME = FALSE
-PrivateKeyArchive = FALSE
-UserProtected = FALSE
-UseExistingKeySet = FALSE
-ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
-ProviderType = 12
-RequestType = PKCS10
-KeyUsage = 0xa0
+        [NewRequest]
+        Subject = `"C=$Country, ST=$State, L=$City, O=$Organization, OU=$Unit, CN=$CommonName`"
+        KeySpec = 1
+        KeyLength = 2048
+        Exportable = TRUE
+        MachineKeySet = TRUE
+        SMIME = FALSE
+        PrivateKeyArchive = FALSE
+        UserProtected = FALSE
+        UseExistingKeySet = FALSE
+        ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`"
+        ProviderType = 12
+        RequestType = PKCS10
+        KeyUsage = 0xa0
 
-[Extensions]
-2.5.29.17 = "{text}"
-"@
+        [Extensions]
+        2.5.29.17 = `"{text}`"
+        "@
 
         foreach ($dns in $SanDNS) {
-            $infContent += "`n_continue_ = \"dns=$dns\""
+            $infContent += "`n_continue_ = `"dns=$dns`""
         }
         foreach ($ip in $SanIPs) {
-            $infContent += "`n_continue_ = \"ipaddress=$ip\""
+            $infContent += "`n_continue_ = `"ipaddress=$ip`""
         }
 
         Set-Content -Path $InfPath -Value $infContent -Encoding ASCII

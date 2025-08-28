@@ -24,17 +24,17 @@
 
   tasks:
     - name: Ensure CSR directory exists
-      win_file:
+      community.windows.win_file:
         path: "C:\\temp"
         state: directory
 
     - name: Create empty INF file
-      win_file:
+      community.windows.win_file:
         path: "{{ inf_path }}"
         state: touch
 
     - name: Add base CSR config to INF file
-      win_lineinfile:
+      community.windows.win_lineinfile:
         path: "{{ inf_path }}"
         line: "{{ item }}"
         create: yes
@@ -61,7 +61,7 @@
         - "2.5.29.17 = \"{text}\""
 
     - name: Add DNS SAN entries
-      win_lineinfile:
+      community.windows.win_lineinfile:
         path: "{{ inf_path }}"
         line: "_continue_ = \"dns={{ item }}\""
         insertafter: EOF
@@ -69,7 +69,7 @@
       when: item | length > 0
 
     - name: Add IP SAN entries
-      win_lineinfile:
+      community.windows.win_lineinfile:
         path: "{{ inf_path }}"
         line: "_continue_ = \"ipaddress={{ item }}\""
         insertafter: EOF
@@ -77,12 +77,12 @@
       when: item | length > 0
 
     - name: Generate CSR using certreq
-      win_shell: certreq -new "{{ inf_path }}" "{{ csr_path }}"
+      community.windows.win_shell: certreq -new "{{ inf_path }}" "{{ csr_path }}"
       args:
         executable: cmd
 
     - name: Fetch CSR file to controller
-      win_fetch:
+      community.windows.win_fetch:
         src: "{{ csr_path }}"
         dest: "./csr_files/{{ common_name }}.req"
         flat: yes

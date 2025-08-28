@@ -1,0 +1,98 @@
+- name: Generate and Sign CSR on Windows CA Host
+  hosts: 192.168.1.11
+  gather_facts: no
+
+  vars:
+    country: "{{ country }}"
+    state: "{{ state }}"
+    city: "{{ city }}"
+    organization: "{{ organization }}"
+    unit: "{{ unit }}"
+    common_name: "{{ common_name }}"
+    san_dns:
+      - "{{ san1 | default('') }}"
+      - "{{ san2 | default('') }}"
+    san_ips:
+      - "{{ ip1 | default('') }}"
+      - "{{ ip2 | default('') }}"
+    inf_path: "C:\\temp\\csr_request.inf"
+    csr_path: "C:\\temp\\csr_request.req"
+    csr_copy_path: "C:\\temp\\copied_{{ common_name }}.req"
+    crt_path: "C:\\temp\\{{ common_name }}.crt"
+    pfx_path: "C:\\temp\\{{ common_name }}.pfx"
+    pfx_password: "StrongPassword123!"  # You can override this via --extra-vars
+
+  tasks:
+    - name: Generate CSR using PowerShell
+      win_shell: |
+        $InfPath = "{{ inf_path }}"
+        $CsrPath = "{{ csr_path }}"
+        $Country = "{{ country }}"
+        $State = "{{ state }}"
+        $City = "{{ city }}"
+        $Org = "{{ organization }}"
+        $Unit = "{{ unit }}"
+        $CN = "{{ common_name }}"
+        $SanDNS = @()
+        $SanIPS = @()
+
+        {% for dns in san_dns %}
+        if ("{{ dns }}") { $SanDNS += "{{ dns }}" }
+        {% endfor %}
+        {% for ip in san_ips %}
+        if ("{{ ip }}") { $SanIPS += "{{ ip }}" }
+        {% endfor %}
+
+        if (-not (Test-Path "C:\\temp")) {
+            New-Item -Path "C:\\temp" -ItemType Directory | Out-Null
+        }
+
+        $inf = @"
+        [Version]
+        Signature=`"$Windows NT$`"
+
+        [NewRequest]
+        Subject = `"C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN`"
+        KeySpec = 1
+        KeyLength = 2048
+        Exportable = TRUE
+        MachineKeySet = TRUE
+        SMIME = FALSE
+        PrivateKeyArchive = FALSE
+        UserProtected = FALSE
+        UseExistingKeySet = FALSE
+        ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`"
+        ProviderType = 12
+        RequestType = PKCS10
+        KeyUsage = 0xa0
+
+        [Extensions]
+        2.5.29.17 = `"{text}`"
+        "@
+
+        foreach ($dns in $SanDNS) {
+            $inf += "`n_continue_ = `"dns=$dns`""
+        }
+        foreach ($ip in $SanIPS) {
+            $inf += "`n_continue_ = `"ipaddress=$ip`""
+        }
+
+        Set-Content -Path $InfPath -Value $inf -Encoding ASCII
+        certreq -new $InfPath $CsrPath
+        Copy-Item -Path $CsrPath -Destination "{{ csr_copy_path }}" -Force
+      args:
+        executable: powershell
+
+    - name: Sign CSR using local Microsoft CA
+      win_shell: |
+        certreq -submit -attrib "CertificateTemplate:WebServer" "{{ csr_path }}" "{{ crt_path }}"
+      args:
+        executable: powershell
+
+    - name: Export signed certificate and private key to PFX
+      win_shell: |
+        $Cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*CN={{ common_name }}*" }
+        $pwd = ConvertTo-SecureString -String "{{ pfx_password }}" -Force -AsPlainText
+        Export-PfxCertificate -Cert $Cert -FilePath "{{ pfx_path }}" -Password $pwd
+      args:
+        executable: powershell

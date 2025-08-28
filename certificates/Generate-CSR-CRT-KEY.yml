@@ -26,7 +26,7 @@
 
   tasks:
 
-    - name: Ensure IssuedCerts folder exists
+    - name: Ensure output directory exists
       win_file:
         path: C:\temp\IssuedCerts
         state: directory
@@ -52,27 +52,27 @@
         {% endfor %}
 
         $inf = @"
-[Version]
-Signature=`"$Windows NT$`"
+        [Version]
+        Signature=`"$Windows NT$`"
 
-[NewRequest]
-Subject = `"C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN`"
-KeySpec = 1
-KeyLength = 2048
-Exportable = TRUE
-MachineKeySet = TRUE
-SMIME = FALSE
-PrivateKeyArchive = FALSE
-UserProtected = FALSE
-UseExistingKeySet = FALSE
-ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`"
-ProviderType = 12
-RequestType = PKCS10
-KeyUsage = 0xa0
+        [NewRequest]
+        Subject = `"C=$Country, ST=$State, L=$City, O=$Org, OU=$Unit, CN=$CN`"
+        KeySpec = 1
+        KeyLength = 2048
+        Exportable = TRUE
+        MachineKeySet = TRUE
+        SMIME = FALSE
+        PrivateKeyArchive = FALSE
+        UserProtected = FALSE
+        UseExistingKeySet = FALSE
+        ProviderName = `"Microsoft RSA SChannel Cryptographic Provider`"
+        ProviderType = 12
+        RequestType = PKCS10
+        KeyUsage = 0xa0
 
-[Extensions]
-2.5.29.17 = "{text}"
-"@
+        [Extensions]
+        2.5.29.17 = `"{text}`"
+        "@
 
         foreach ($dns in $SanDNS) {
             $inf += "`n_continue_ = `"dns=$dns`""
@@ -87,7 +87,7 @@ KeyUsage = 0xa0
       args:
         executable: powershell
 
-    - name: Submit CSR and retrieve certificate
+    - name: Submit CSR and retrieve issued certificate
       win_shell: |
         $CsrPath = "{{ csr_path }}"
         $CertPath = "{{ crt_path }}"
@@ -99,9 +99,9 @@ KeyUsage = 0xa0
         if ($output -match "RequestId: (\d+)") {
             Write-Host "Request ID: $($matches[1])"
         } elseif (Test-Path $CertPath) {
-            Write-Host "Certificate saved to $CertPath"
+            Write-Host "Certificate file saved directly to $CertPath"
         } else {
-            Write-Error "Failed to retrieve certificate: $output"
+            Write-Error "Failed to retrieve certificate."
             exit 1
         }
 
@@ -109,16 +109,13 @@ KeyUsage = 0xa0
       args:
         executable: powershell
 
-    - name: Export certificate and private key to PFX
+    - name: Export signed certificate and private key to PFX
       win_shell: |
-        $Subject = "CN={{ common_name }}"
-        $Cert = Get-ChildItem -Path Cert:\LocalMachine\My |
-            Where-Object { $_.Subject -like "*$Subject*" } |
-            Sort-Object NotBefore -Descending |
-            Select-Object -First 1
+        $SubjectMatch = "CN={{ common_name }}"
+        $Cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*$SubjectMatch*" } | Sort-Object NotBefore -Descending | Select-Object -First 1
 
         if (-not $Cert) {
-            Write-Error "Certificate for CN={{ common_name }} not found in local machine store."
+            Write-Error "Certificate not found in local store for CN={{ common_name }}"
             exit 1
         }
 

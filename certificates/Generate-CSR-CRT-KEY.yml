@@ -20,7 +20,8 @@
     csr_copy_path: "C:\\temp\\copied_{{ common_name }}.req"
     crt_path: "C:\\temp\\{{ common_name }}.crt"
     pfx_path: "C:\\temp\\{{ common_name }}.pfx"
-    pfx_password: "StrongPassword123!"  # You can override this via --extra-vars
+    pfx_password: "StrongPassword123!"  # Override via --extra-vars if needed
+    ca_name: "addns.vmware.local\\vmware-ADDNS-CA"
 
   tasks:
     - name: Generate CSR using PowerShell
@@ -85,7 +86,11 @@
 
     - name: Sign CSR using local Microsoft CA
       win_shell: |
-        certreq -submit -attrib "CertificateTemplate:WebServer" "{{ csr_path }}" "{{ crt_path }}"
+        $CsrPath = "{{ csr_path }}"
+        $CertPath = "{{ crt_path }}"
+        $CAName = "{{ ca_name }}"
+
+        certreq -submit -config "$CAName" -attrib "CertificateTemplate:WebServer" $CsrPath $CertPath
       args:
         executable: powershell
 

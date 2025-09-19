@@ -1,0 +1,42 @@
+- name: Delete DNS A Record
+  hosts: 192.168.1.11
+  gather_facts: no
+  vars:
+    recordname: "{{ recordname }}"
+    recordip: "{{ recordip }}"
+    dns_server: "192.168.1.11"
+    zone_name: "vmware.local"
+
+  tasks:
+    - name: Delete DNS A Record
+      win_shell: |
+        $dnsServer = "{{ dns_server }}"
+        $zoneName = "{{ zone_name }}"
+        $recordName = "{{ recordname }}"
+        $ipAddress = "{{ recordip }}"
+
+        try {
+          $record = Get-DnsServerResourceRecord `
+            -ComputerName $dnsServer `
+            -ZoneName $zoneName `
+            -Name $recordName `
+            -RRType "A" `
+            -ErrorAction Stop
+
+          if ($record) {
+            Remove-DnsServerResourceRecord `
+              -ZoneName $zoneName `
+              -RRType "A" `
+              -Name $recordName `
+              -RecordData $ipAddress `
+              -ComputerName $dnsServer `
+              -Force `
+              -ErrorAction Stop
+
+            Write-Host "A record deleted: $recordName.$zoneName -> $ipAddress"
+          } else {
+            Write-Host "No A record found for $recordName.$zoneName"
+          }
+        } catch {
+          Write-Host "Failed to delete DNS A record: $($_.Exception.Message)"
+        }

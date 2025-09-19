@@ -4,32 +4,20 @@
 #example "{{ pfx_password }}" VMware123!VMware123!
 #example "{{ ca_config }}" addns.vmware.local\vmware-ADDNS-CA-1
 #update in CertificateTemplate=webserver1 in code
----
-- name: Renew a certificate and export it as a PFX on the CA server
-  hosts: all
-  gather_facts: no
-  tasks:
+- name: Renew the certificate and export to PFX
+  win_shell: |
+    $thumb = "{{ cert_thumbprint }}"
+    $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $thumb }
 
-    - name: Ensure export directory exists
-      win_file:
-        path: "{{ cert_export_path | dirname }}"
-        state: directory
+    if (-not $cert) {
+        throw "Certificate with thumbprint $thumb not found."
+    }
 
-    - name: Renew the certificate and export to PFX
-      win_shell: |
-        $thumb = "{{ cert_thumbprint }}"
-        $cert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $thumb }
+    $infPath = "$env:TEMP\renew.inf"
+    $reqPath = "$env:TEMP\renew.req"
+    $cerPath = "$env:TEMP\renewed.cer"
 
-        if (-not $cert) {
-            throw "Certificate with thumbprint $thumb not found."
-        }
-
-        $infPath = "$env:TEMP\renew.inf"
-        $reqPath = "$env:TEMP\renew.req"
-        $cerPath = "$env:TEMP\renewed.cer"
-
-        $infContent = @"
-[Version]
+    $infContent = '[Version]
 Signature="$Windows NT$"
 
 [RenewalRequest]
@@ -38,26 +26,26 @@ RenewalCertStore=My
 RequestType=PKCS10
 
 [RequestAttributes]
-CertificateTemplate=webserver1
-"@
+CertificateTemplate=webserver1'
 
-        Set-Content -Path $infPath -Value $infContent -Force
+    Set-Content -Path $infPath -Value $infContent -Force
 
-        certreq -new $infPath $reqPath
-        certreq -submit -config "{{ ca_config }}" $reqPath $cerPath
-        certreq -accept $cerPath
+    certreq -new $infPath $reqPath
+    certreq -submit -config "{{ ca_config }}" $reqPath $cerPath
+    certreq -accept $cerPath
 
-        $renewedCert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object {
-            $_.Subject -eq $cert.Subject -and $_.NotAfter -gt $cert.NotAfter
-        } | Sort-Object NotAfter -Descending | Select-Object -First 1
+    $renewedCert = Get-ChildItem -Path Cert:\LocalMachine\My | Where-Object {
+        $_.Subject -eq $cert.Subject -and $_.NotAfter -gt $cert.NotAfter
+    } | Sort-Object NotAfter -Descending | Select-Object -First 1
 
-        if (-not $renewedCert) {
-            throw "Renewed certificate not found."
-        }
+    if (-not $renewedCert) {
+        throw "Renewed certificate not found."
+    }
 
-        $securePass = ConvertTo-SecureString "{{ pfx_password }}" -AsPlainText -Force
-        Export-PfxCertificate -Cert $renewedCert -FilePath "{{ cert_export_path }}" -Password $securePass -Force
+    $securePass = ConvertTo-SecureString "{{ pfx_password }}" -AsPlainText -Force
+    Export-PfxCertificate -Cert $renewedCert -FilePath "{{ cert_export_path }}" -Password $securePass -Force
 
-        Write-Output "Certificate renewed and exported to {{ cert_export_path }}"
-      args:
-        executable: powershell.exe
+    Write-Output "Certificate renewed and exported to {{ cert_export_path }}"
+  args:
+    executable: powershell.exe
+

@@ -1,3 +1,4 @@
+---
 # Survey Inputs (examples)
 # example "{{ cert_thumbprint }}" b03d22a42a8c7c5d3eea6f7659a4aeb1f17de8aa
 # example "{{ cert_export_path }}" C:\temp\renewed\servername_renewed_cert.pfx
@@ -10,7 +11,6 @@
   hosts: 192.168.1.11
   gather_facts: no
   tasks:
-
     - name: Renew the certificate and export to PFX (no error checking)
       win_shell: |
         $thumb = "{{ cert_thumbprint }}"
@@ -30,7 +30,7 @@
         )
 
         $infPath = Join-Path $env:TEMP "renew.inf"
-        $infContent = $infLines -join "`r`n"
+        $infContent = $infLines -join "``r``n"
         Set-Content -Path $infPath -Value $infContent -Force
 
         $renewReq = Join-Path $env:TEMP "renew.req"

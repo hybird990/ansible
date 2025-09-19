@@ -4,8 +4,8 @@
 # example "{{ cert_export_path }}" C:\temp\renewed\servername_renewed_cert.pfx
 # example "{{ pfx_password }}" VMware123!VMware123!
 # example "{{ ca_config }}" addns.vmware.local\vmware-ADDNS-CA-1
-# update CertificateTemplate=webserver1 in code below if needed
-# server CA name is 192.168.1.11
+# example "{{ cert_template }}" webserver1
+
 - name: Renew certificate and export to PFX on Windows hosts
   hosts: 192.168.1.11
   gather_facts: no
@@ -25,7 +25,7 @@
           "RequestType=PKCS10"
           ""
           "[RequestAttributes]"
-          "CertificateTemplate=webserver1"
+          "CertificateTemplate={{ cert_template }}"
         )
 
         $infPath = Join-Path $env:TEMP "renew.inf"
@@ -35,7 +35,7 @@
         $renewCer = Join-Path $env:TEMP "renewed.cer"
 
         certreq -new $infPath $renewReq
-        certreq -submit -config "{{ ca_config }}" $renewReq $renewCer
+        certreq -submit -attrib "CertificateTemplate={{ cert_template }}" -config "{{ ca_config }}" $renewReq $renewCer
         certreq -accept $renewCer
 
         $newCert = Get-ChildItem Cert:\LocalMachine\My | Where-Object {

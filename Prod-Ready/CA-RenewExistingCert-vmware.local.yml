@@ -16,7 +16,19 @@
         $thumb = "{{ cert_thumbprint }}"
         $cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $thumb }
 
-        $inf = "[Version]`nSignature=`"$Windows NT$`"`n`n[RenewalRequest]`nRenewalCert=$thumb`nRenewalCertStore=My`nRequestType=PKCS10`n`n[RequestAttributes]`nCertificateTemplate=webserver1"
+        $inf = @"
+[Version]
+Signature="$Windows NT$"
+
+[RenewalRequest]
+RenewalCert=$thumb
+RenewalCertStore=My
+RequestType=PKCS10
+
+[RequestAttributes]
+CertificateTemplate=webserver1
+"@
+
         $infPath = "$env:TEMP\renew.inf"
         Set-Content -Path $infPath -Value $inf -Force
 

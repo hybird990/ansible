@@ -3,17 +3,15 @@
   gather_facts: no
   vars:
     recordname: "{{ recordname }}"
-    recordip: "{{ recordip }}"
     dns_server: "192.168.1.11"
     zone_name: "vmware.local"
 
   tasks:
     - name: Delete DNS A Record
-      win_shell: |
-        $dnsServer = "{{ dns_server }}"
-        $zoneName = "{{ zone_name }}"
-        $recordName = "{{ recordname }}"
-        $ipAddress = "{{ recordip }}"
+      ansible.builtin.win_shell: |
+        $dnsServer = '{{ dns_server }}'
+        $zoneName = '{{ zone_name }}'
+        $recordName = '{{ recordname }}'
 
         try {
           $record = Get-DnsServerResourceRecord `
@@ -24,19 +22,21 @@
             -ErrorAction Stop
 
           if ($record) {
-            Remove-DnsServerResourceRecord `
-              -ZoneName $zoneName `
-              -RRType "A" `
-              -Name $recordName `
-              -RecordData $ipAddress `
-              -ComputerName $dnsServer `
-              -Force `
-              -ErrorAction Stop
+            foreach ($r in $record) {
+              Remove-DnsServerResourceRecord `
+                -ZoneName $zoneName `
+                -RRType "A" `
+                -Name $recordName `
+                -RecordData $r.RecordData.IPv4Address.IPAddressToString `
+                -ComputerName $dnsServer `
+                -Force `
+                -ErrorAction Stop
+            }
 
-            Write-Host "A record deleted: $recordName.$zoneName -> $ipAddress"
+            Write-Output "A record(s) deleted: $recordName.$zoneName"
           } else {
-            Write-Host "No A record found for $recordName.$zoneName"
+            Write-Output "No A record found for $recordName.$zoneName"
           }
         } catch {
-          Write-Host "Failed to delete DNS A record: $($_.Exception.Message)"
+          Write-Output "Failed to delete DNS A record: $($_.Exception.Message)"
         }

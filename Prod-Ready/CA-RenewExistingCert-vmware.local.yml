@@ -3,6 +3,7 @@
 #example "{{ cert_export_path }}" C:\temp\renewed\servername_renewed_cert.pfx
 #example "{{ pfx_password }}" VMware123!VMware123!
 #example "{{ ca_config }}" addns.vmware.local\vmware-ADDNS-CA-1
+#update in CertificateTemplate=webserver1 in code
 ---
 - name: Renew a certificate and export it as a PFX on the CA server
   hosts: all
@@ -37,7 +38,7 @@ RenewalCertStore=My
 RequestType=PKCS10
 
 [RequestAttributes]
-CertificateTemplate=WebServer
+CertificateTemplate=webserver1
 "@
 
         Set-Content -Path $infPath -Value $infContent -Force

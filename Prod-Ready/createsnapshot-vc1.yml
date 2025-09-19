@@ -4,14 +4,25 @@
   gather_facts: false
 
   tasks:
-    - name: create snapshot
+    - name: Get VM info
+      vmware_guest_info:
+        hostname: "192.168.1.13"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "cl2"
+        name: "{{ vm_name }}"
+        validate_certs: false
+      register: vm_info
+
+    - name: Create snapshot
       vmware_guest_snapshot:
         hostname: "192.168.1.13"
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         datacenter: "cl2"
-        validate_certs: false
+        folder: "{{ vm_info.instance.folder }}"
         name: "{{ vm_name }}"
         state: present
         snapshot_name: "Ansible Managed Snapshot"
         description: "This snapshot is created by Ansible Playbook"
+        validate_certs: false

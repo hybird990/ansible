@@ -6,7 +6,6 @@
 # example "{{ ca_config }}" addns.vmware.local\vmware-ADDNS-CA-1
 # update CertificateTemplate=webserver1 in code below if needed
 # server CA name is 192.168.1.11
-
 - name: Renew certificate and export to PFX on Windows hosts
   hosts: 192.168.1.11
   gather_facts: no
@@ -30,7 +29,7 @@
         )
 
         $infPath = Join-Path $env:TEMP "renew.inf"
-        $infContent = $infLines -join "``r``n"
+        $infContent = $infLines -join "`r`n"
         Set-Content -Path $infPath -Value $infContent -Force
 
         $renewReq = Join-Path $env:TEMP "renew.req"

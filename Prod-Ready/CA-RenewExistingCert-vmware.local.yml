@@ -29,7 +29,7 @@
           "CertificateTemplate=webserver1"
         )
 
-        $infPath = '$env:TEMP\renew.inf'
+        $infPath = "$env:TEMP\renew.inf"
         $infContent = $infLines -join "`r`n"
         Set-Content -Path $infPath -Value $infContent -Force
 

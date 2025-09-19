@@ -10,7 +10,7 @@
         username: "{{ vcenter_username }}"
         password: "{{ vcenter_password }}"
         datacenter: "cl2"
-        validate_certs: "{{ vcenter_validate_certs }}"
+        validate_certs: false
         name: "{{ vm_name }}"
         state: present
         snapshot_name: "Ansible Managed Snapshot"

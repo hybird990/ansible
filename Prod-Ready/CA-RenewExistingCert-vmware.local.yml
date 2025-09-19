@@ -4,7 +4,7 @@
 # example "{{ cert_export_path }}" C:\temp\renewed\servername_renewed_cert.pfx
 # example "{{ pfx_password }}" VMware123!VMware123!
 # example "{{ ca_config }}" addns.vmware.local\vmware-ADDNS-CA-1
-# update CertificateTemplate=webserver1 in code below if needed
+# Update CertificateTemplate=webserver1 in code below if needed
 
 - name: Renew certificate and export to PFX on Windows hosts
   hosts: 192.168.1.11
@@ -16,21 +16,21 @@
         $thumb = "{{ cert_thumbprint }}"
         $cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $thumb }
 
-        $inf = @"
-        [Version]
-        Signature="$Windows NT$"
-
-        [RenewalRequest]
-        RenewalCert=$thumb
-        RenewalCertStore=My
-        RequestType=PKCS10
-
-        [RequestAttributes]
-        CertificateTemplate=webserver1
-        "@
+        $infLines = @(
+          "[Version]"
+          'Signature="$Windows NT$"'
+          ""
+          "[RenewalRequest]"
+          "RenewalCert=$thumb"
+          "RenewalCertStore=My"
+          "RequestType=PKCS10"
+          ""
+          "[RequestAttributes]"
+          "CertificateTemplate=webserver1"
+        )
 
         $infPath = "$env:TEMP\renew.inf"
-        Set-Content -Path $infPath -Value $inf -Force
+        $infLines -join "`r`n" | Set-Content -Path $infPath -Force
 
         certreq -new $infPath $env:TEMP\renew.req
         certreq -submit -config "{{ ca_config }}" $env:TEMP\renew.req $env:TEMP\renewed.cer

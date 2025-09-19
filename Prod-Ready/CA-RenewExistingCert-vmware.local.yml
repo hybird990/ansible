@@ -29,8 +29,7 @@
         )
 
         $infPath = Join-Path $env:TEMP "renew.inf"
-        $infContent = $infLines -join "`r`n"
-        Set-Content -Path $infPath -Value $infContent -Force
+        $infLines | Out-File -FilePath $infPath -Encoding ascii -Force
 
         $renewReq = Join-Path $env:TEMP "renew.req"
         $renewCer = Join-Path $env:TEMP "renewed.cer"

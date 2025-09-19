@@ -1,10 +1,10 @@
----
 # Survey Inputs (examples)
 # example "{{ cert_thumbprint }}" b03d22a42a8c7c5d3eea6f7659a4aeb1f17de8aa
 # example "{{ cert_export_path }}" C:\temp\renewed\servername_renewed_cert.pfx
 # example "{{ pfx_password }}" VMware123!VMware123!
 # example "{{ ca_config }}" addns.vmware.local\vmware-ADDNS-CA-1
 # update CertificateTemplate=webserver1 in code below if needed
+# server CA name is 192.168.1.11
 
 - name: Renew certificate and export to PFX on Windows hosts
   hosts: 192.168.1.11
@@ -29,13 +29,16 @@
           "CertificateTemplate=webserver1"
         )
 
-        $infPath = "$env:TEMP\renew.inf"
+        $infPath = Join-Path $env:TEMP "renew.inf"
         $infContent = $infLines -join "`r`n"
         Set-Content -Path $infPath -Value $infContent -Force
 
-        certreq -new $infPath $env:TEMP\renew.req
-        certreq -submit -config "{{ ca_config }}" $env:TEMP\renew.req $env:TEMP\renewed.cer
-        certreq -accept $env:TEMP\renewed.cer
+        $renewReq = Join-Path $env:TEMP "renew.req"
+        $renewCer = Join-Path $env:TEMP "renewed.cer"
+
+        certreq -new $infPath $renewReq
+        certreq -submit -config "{{ ca_config }}" $renewReq $renewCer
+        certreq -accept $renewCer
 
         $newCert = Get-ChildItem Cert:\LocalMachine\My | Where-Object {
           $_.Subject -eq $cert.Subject -and $_.NotAfter -gt $cert.NotAfter

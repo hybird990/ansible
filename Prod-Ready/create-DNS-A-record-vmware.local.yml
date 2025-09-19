@@ -1,13 +1,29 @@
-name: create_dns_a_record
-type: powershell
-script: |
-  $dnsServer = "192.168.1.11"
-  $zoneName = "vmware.local"
-  $recordName = "{{ recordname }}"
-  $ipAddress = "{{ recordip }}"
+- name: Create DNS A Record
+  hosts: 192.168.1.11
+  gather_facts: no
+  vars:
+    recordname: "{{ recordname }}"
+    recordip: "{{ recordip }}"
+    dns_server: "192.168.1.11"
+    zone_name: "vmware.local"
 
-  Add-DnsServerResourceRecordA `
-      -Name $recordName `
-      -ZoneName $zoneName `
-      -IPv4Address $ipAddress `
-      -ComputerName $dnsServer
+  tasks:
+    - name: Add DNS A Record
+      win_shell: |
+        $dnsServer = "{{ dns_server }}"
+        $zoneName = "{{ zone_name }}"
+        $recordName = "{{ recordname }}"
+        $ipAddress = "{{ recordip }}"
+
+        try {
+          Add-DnsServerResourceRecordA `
+            -Name $recordName `
+            -ZoneName $zoneName `
+            -IPv4Address $ipAddress `
+            -ComputerName $dnsServer `
+            -ErrorAction Stop
+
+          Write-Host "A record created: $recordName.$zoneName -> $ipAddress"
+        } catch {
+          Write-Host "Failed to create DNS A record: $($_.Exception.Message)"
+        }

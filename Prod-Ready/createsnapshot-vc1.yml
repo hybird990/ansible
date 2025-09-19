@@ -1,0 +1,17 @@
+- name: vm snapshot Playbook
+  hosts: 192.168.1.13
+  become: false
+  gather_facts: false
+
+  tasks:
+    - name: create snapshot
+      vmware_guest_snapshot:
+        hostname: "192.168.1.13"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "cl2"
+        validate_certs: "{{ vcenter_validate_certs }}"
+        name: "{{ vm_name }}"
+        state: present
+        snapshot_name: "Ansible Managed Snapshot"
+        description: "This snapshot is created by Ansible Playbook"

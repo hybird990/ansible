@@ -1,0 +1,13 @@
+name: create_dns_a_record
+type: powershell
+script: |
+  $dnsServer = "192.168.1.11"
+  $zoneName = "vmware.local"
+  $recordName = "{{ recordname }}"
+  $ipAddress = "{{ recordip }}"
+
+  Add-DnsServerResourceRecordA `
+      -Name $recordName `
+      -ZoneName $zoneName `
+      -IPv4Address $ipAddress `
+      -ComputerName $dnsServer

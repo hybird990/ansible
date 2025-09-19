@@ -4,11 +4,10 @@
 #example "{{ pfx_password }}" VMware123!VMware123!
 #example "{{ ca_config }}" addns.vmware.local\vmware-ADDNS-CA-1
 #update in CertificateTemplate=webserver1 in code
-- name: Renew the certificate and export to PFX
+- name: Renew the certificate and export to PFX (no error checking)
   win_shell: |
     $thumb = "{{ cert_thumbprint }}"
     $cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $thumb }
-    if (-not $cert) { throw "Certificate not found." }
 
     $inf = "[Version]`nSignature=`"$Windows NT$`"`n`n[RenewalRequest]`nRenewalCert=$thumb`nRenewalCertStore=My`nRequestType=PKCS10`n`n[RequestAttributes]`nCertificateTemplate=webserver1"
     $infPath = "$env:TEMP\renew.inf"
@@ -21,7 +20,6 @@
     $newCert = Get-ChildItem Cert:\LocalMachine\My | Where-Object {
       $_.Subject -eq $cert.Subject -and $_.NotAfter -gt $cert.NotAfter
     } | Sort-Object NotAfter -Descending | Select-Object -First 1
-    if (-not $newCert) { throw "Renewed certificate not found." }
 
     $pass = ConvertTo-SecureString "{{ pfx_password }}" -AsPlainText -Force
     Export-PfxCertificate -Cert $newCert -FilePath "{{ cert_export_path }}" -Password $pass -Force

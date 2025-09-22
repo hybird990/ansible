@@ -1,65 +1,27 @@
-- name: Query certificates expiring in X days from local CA
-  hosts: 192.168.1.11
+---
+- name: Get certificates expiring within 2 months from CA
+  hosts: windows
   gather_facts: no
-
-  vars:
-    ca_config: "vmware.local\\vmware-ADDNS-CA-1"
-    days_until_expiry: "{{ days_until_expiry_input | int }}"
-
   tasks:
-    - name: Capture raw certutil output
-      win_shell: certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}"
-      register: cert_output_raw
-
-    - name: Filter and label certificates using PowerShell
+    - name: Run certutil to get expiring certificates in 2 months
       win_shell: |
-        $expiry = (Get-Date).AddDays({{ days_until_expiry }})
-        $culture = [System.Globalization.CultureInfo]::CreateSpecificCulture("en-AU")
-        $lines = @(
-        {% for line in cert_output_raw.stdout_lines %}
-          "{{ line.replace('"', '`"') }}"
-        {% endfor %}
-        )
+        $today = Get-Date
+        $twoMonthsLater = $today.AddMonths(2)
+        $todayFormatted = $today.ToString("MM/dd/yyyy")
+        $twoMonthsLaterFormatted = $twoMonthsLater.ToString("MM/dd/yyyy")
 
-        $results = @()
-        for ($i = 0; $i -lt $lines.Count; $i++) {
-          if ($lines[$i] -match '^Issued Request ID:\s*(\S+)') {
-            $requestId = $matches[1]
-            $commonName = ''
-            $notAfterStr = ''
-            $revoked = $false
-            $revocationDate = ''
+        $caConfig = "vmware.local\vmware-ADDNS-CA-1"
+        $restrictFilter = "NotAfter>=$todayFormatted&NotAfter<=$twoMonthsLaterFormatted"
 
-            if ($i+1 -lt $lines.Count -and $lines[$i+1] -match '^Issued Common Name:\s*"?(.+?)"?$') {
-              $commonName = $matches[1]
-            }
-            if ($i+2 -lt $lines.Count -and $lines[$i+2] -match '^Certificate Expiration Date:\s*(.+)$') {
-              $notAfterStr = $matches[1]
-            }
-            if ($i+3 -lt $lines.Count -and $lines[$i+3] -match '^Certificate Revocation Date:\s*(.+)$') {
-              $revoked = $true
-              $revocationDate = $matches[1]
-            }
+        $certutilCmd = "certutil -view -restrict `"$restrictFilter`" -out RequestID,CommonName,NotAfter -config `"$caConfig`""
 
-            try {
-              $notAfter = [datetime]::Parse($notAfterStr, $culture)
-              if ($notAfter -lt $expiry -or $revoked) {
-                if ($revoked) {
-                  $status = "Revoked ($revocationDate)"
-                } else {
-                  $status = "Active"
-                }
-                $results += "RequestID: $requestId`nCommonName: $commonName`nNotAfter: $notAfter`nStatus: $status`n---"
-              }
-            } catch {
-              $results += "Failed to parse date for RequestID: $requestId`nRaw Date: $notAfterStr`n---"
-            }
-          }
-        }
+        Write-Host "Running command:"
+        Write-Host $certutilCmd
+        Write-Host ""
 
-        $results -join "`n"
-      register: cert_output_filtered
+        Invoke-Expression $certutilCmd
+      register: certs_output
 
-    - name: Display all matching certificates
+    - name: Show certificates expiring within 2 months
       debug:
-        msg: "{{ cert_output_filtered.stdout_lines }}"
+        msg: "{{ certs_output.stdout_lines }}"

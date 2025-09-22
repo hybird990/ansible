@@ -1,0 +1,22 @@
+---
+- name: Query certificates expiring in X days from local CA
+  hosts: 192.168.1.11
+  gather_facts: no
+
+  vars:
+    ca_config: "vmware.local\\vmware-ADDNS-CA-1"
+    days_until_expiry: "{{ days_until_expiry_input | int }}"
+
+  tasks:
+    - name: Query expiring certificates
+      win_shell: |
+        $daysUntilExpiry = {{ days_until_expiry }}
+        $currentDate = Get-Date
+        $expiryDate = $currentDate.AddDays($daysUntilExpiry)
+
+        certutil -view -restrict "NotAfter<=$($expiryDate.ToString('MM/dd/yyyy'))" -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}"
+      register: cert_output
+
+    - name: Display expiring certificates
+      debug:
+        msg: "{{ cert_output.stdout_lines }}"

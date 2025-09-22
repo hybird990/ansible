@@ -7,22 +7,38 @@
     days_until_expiry: "{{ days_until_expiry_input | int }}"
 
   tasks:
-    - name: Query expiring certificates using certutil
+    - name: Query expiring certificates using certutil and filter in PowerShell
       win_shell: |
         $daysUntilExpiry = {{ days_until_expiry }}
-        $currentDate = Get-Date
-        $expiryDate = $currentDate.AddDays($daysUntilExpiry)
-        # Format expiryDate as yyyy/MM/dd
-        $expiryString = $expiryDate.ToString("yyyy/MM/dd")
+        $expiryDate = (Get-Date).AddDays($daysUntilExpiry)
 
-        # Construct certutil command with proper filters and fields
-        $cmd = "certutil -view -restrict `"Request.NotAfter<=${expiryString}`" -out `"Request.RequestID,Request.CommonName,Request.NotAfter`" -config `"{{
-          ca_config }}`""
-        
-        Write-Output "Running command: $cmd"
-        Invoke-Expression $cmd
+        $raw = certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}"
+        $lines = $raw | Where-Object { $_ -match '^\d+,' }
+
+        $results = @()
+        foreach ($line in $lines) {
+            $parts = $line -split ","
+            if ($parts.Length -ge 3) {
+                $requestId = $parts[0].Trim()
+                $commonName = $parts[1].Trim()
+                $notAfterRaw = $parts[2].Trim()
+
+                try {
+                    $notAfter = Get-Date $notAfterRaw
+                    if ($notAfter -lt $expiryDate) {
+                        $results += [PSCustomObject]@{
+                            RequestID  = $requestId
+                            CommonName = $commonName
+                            NotAfter   = $notAfter
+                        }
+                    }
+                } catch {}
+            }
+        }
+
+        $results | ConvertTo-Json -Depth 3
       register: cert_output
 
-    - name: Display expiring certificates in job output
+    - name: Display filtered expiring certificates
       debug:
-        msg: "{{ cert_output.stdout_lines }}"
+        var: cert_output.stdout

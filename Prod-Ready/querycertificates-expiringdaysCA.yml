@@ -15,13 +15,13 @@
         $certList = @()
 
         foreach ($line in $certutilOutput) {
-            if ($line -match '^Issued Request ID: 0x([0-9a-fA-F]+)') {
+            if ($line -match '^\s*Issued Request ID: 0x([0-9a-fA-F]+)') {
                 $currentRequestID = $matches[1]
             }
-            elseif ($line -match '^Issued Common Name: "(.*)"') {
+            elseif ($line -match '^\s*Issued Common Name: "(.*)"') {
                 $currentCommonName = $matches[1]
             }
-            elseif ($line -match '^Certificate Expiration Date: (\d{2}/\d{2}/\d{4} \d{1,2}:\d{2} (AM|PM))') {
+            elseif ($line -match '^\s*Certificate Expiration Date: (\d{2}/\d{2}/\d{4} \d{1,2}:\d{2} (AM|PM))') {
                 $dateString = $matches[1]
                 $culture = [System.Globalization.CultureInfo]::InvariantCulture
                 $dateFormat = 'dd/MM/yyyy h:mm tt'

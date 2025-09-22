@@ -26,19 +26,15 @@
                 try {
                     $notAfter = Get-Date $notAfterRaw
                     if ($notAfter -lt $expiryDate) {
-                        $results += [PSCustomObject]@{
-                            RequestID  = $requestId
-                            CommonName = $commonName
-                            NotAfter   = $notAfter
-                        }
+                        $results += "RequestID: $requestId`nCommonName: $commonName`nNotAfter: $notAfter`n---"
                     }
                 } catch {}
             }
         }
 
-        $results | ConvertTo-Json -Depth 3
+        $results -join "`n"
       register: cert_output
 
-    - name: Display filtered expiring certificates
+    - name: Display filtered expiring certificates in clean format
       debug:
-        var: cert_output.stdout
+        msg: "{{ cert_output.stdout_lines }}"

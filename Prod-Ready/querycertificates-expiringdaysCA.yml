@@ -8,15 +8,18 @@
     days_until_expiry: "{{ days_until_expiry_input | int }}"
 
   tasks:
-    - name: Query expiring certificates
+    - name: Query expiring certificates using certutil
       win_shell: |
         $daysUntilExpiry = {{ days_until_expiry }}
         $currentDate = Get-Date
         $expiryDate = $currentDate.AddDays($daysUntilExpiry)
+        $expiryString = $expiryDate.ToString("MM/dd/yyyy")
 
-        certutil -view -restrict "NotAfter<=$($expiryDate.ToString('MM/dd/yyyy'))" -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}"
+        $cmd = "certutil -view -restrict `"NotAfter<=$expiryString`" -out `"RequestID,CommonName,NotAfter`" -config `"{{
+          ca_config }}`""
+        Invoke-Expression $cmd
       register: cert_output
 
-    - name: Display expiring certificates
+    - name: Display expiring certificates in job output
       debug:
         msg: "{{ cert_output.stdout_lines }}"

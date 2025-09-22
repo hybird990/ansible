@@ -11,11 +11,13 @@
       win_shell: certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}"
       register: cert_output_raw
 
-    - name: Filter expiring certificates using PowerShell (simple parsing)
+    - name: Filter expiring certificates using PowerShell
       win_shell: |
         $expiry = (Get-Date).AddDays({{ days_until_expiry }})
         $lines = @(
-          {{ cert_output_raw.stdout | to_json }}
+        {% for line in cert_output_raw.stdout_lines %}
+          "{{ line.replace('"', '`"') }}"
+        {% endfor %}
         )
 
         $results = @()
@@ -45,6 +47,6 @@
         $results -join "`n"
       register: cert_output_filtered
 
-    - name: Display filtered expiring certificates in clean format
+    - name: Display filtered expiring certificates
       debug:
         msg: "{{ cert_output_filtered.stdout_lines }}"

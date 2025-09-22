@@ -1,31 +1,57 @@
 ---
-- name: Get certificates expiring within N months from CA
+- name: Check certificates expiring within N months
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    months_ahead: 2   # default value, can be overridden by survey
+    months_ahead: 2   # default value; overridden by AWX survey
 
   tasks:
-    - name: Run certutil to get expiring certificates in N months
+    - name: Run certutil and filter certificates expiring within {{ months_ahead }} month(s)
       win_shell: |
-        $today = Get-Date
         $monthsAhead = {{ months_ahead }}
-        $twoMonthsLater = $today.AddMonths($monthsAhead)
-        $todayFormatted = $today.ToString("MM/dd/yyyy")
-        $twoMonthsLaterFormatted = $twoMonthsLater.ToString("MM/dd/yyyy")
 
-        $caConfig = "vmware.local\vmware-ADDNS-CA-1"
-        $restrictFilter = "NotAfter>=$todayFormatted&NotAfter<=$twoMonthsLaterFormatted"
+        $certutilOutput = certutil -view -out RequestID,CommonName,NotAfter -config "vmware.local\vmware-ADDNS-CA-1"
 
-        $certutilCmd = "certutil -view -restrict `"$restrictFilter`" -out RequestID,CommonName,NotAfter -config `"$caConfig`""
+        $certList = @()
 
-        Write-Host "Running command:"
-        Write-Host $certutilCmd
-        Write-Host ""
+        foreach ($line in $certutilOutput) {
+            if ($line -match '^Issued Request ID: 0x([0-9a-fA-F]+)') {
+                $currentRequestID = $matches[1]
+            }
+            elseif ($line -match '^Issued Common Name: "(.*)"') {
+                $currentCommonName = $matches[1]
+            }
+            elseif ($line -match '^Certificate Expiration Date: (\d{2}/\d{2}/\d{4} \d{1,2}:\d{2} (AM|PM))') {
+                $dateString = $matches[1]
+                $culture = [System.Globalization.CultureInfo]::InvariantCulture
+                $dateFormat = 'dd/MM/yyyy h:mm tt'
+                $parsedDate = [datetime]::ParseExact($dateString, $dateFormat, $culture)
+                $currentNotAfter = $parsedDate
 
-        Invoke-Expression $certutilCmd
-      register: certs_output
+                $certList += [PSCustomObject]@{
+                    RequestID = $currentRequestID
+                    CommonName = $currentCommonName
+                    NotAfter = $currentNotAfter
+                }
 
-    - name: Show certificates expiring within given months
+                $currentRequestID = $null
+                $currentCommonName = $null
+                $currentNotAfter = $null
+            }
+        }
+
+        $thresholdDate = (Get-Date).AddMonths($monthsAhead)
+
+        $expiringCerts = $certList | Where-Object { $_.NotAfter -le $thresholdDate }
+
+        if ($expiringCerts) {
+            $expiringCerts | Format-Table RequestID, CommonName, NotAfter -AutoSize | Out-String
+        }
+        else {
+            "No certificates expiring within the next $monthsAhead month(s)."
+        }
+      register: cert_expiry_output
+
+    - name: Show certificates expiring soon
       debug:
-        msg: "{{ certs_output.stdout_lines }}"
+        msg: "{{ cert_expiry_output.stdout }}"

@@ -18,7 +18,7 @@
 {{ cert_output_raw.stdout | join("\n") | replace("{{", "{ {") | replace("}}", "} }") }}
 '@
 
-        $pattern = 'Row \\d+:.*?Issued Request ID: (0x[0-9a-f]+).*?Issued Common Name: "?(.+?)"?\\s+Certificate Expiration Date: (.+?)\\r?$'
+        $pattern = 'Row \d+:.*?Issued Request ID: (0x[0-9a-f]+).*?Issued Common Name: "?(.+?)"?\s+Certificate Expiration Date: (.+?)\r?$'
         ([regex]::Matches($text, $pattern, 'Singleline') | Where-Object {
           try { ([datetime]$_.Groups[3].Value) -lt $expiry } catch { $false }
         }).ForEach({

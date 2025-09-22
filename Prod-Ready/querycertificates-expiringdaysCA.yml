@@ -1,12 +1,16 @@
 ---
-- name: Get certificates expiring within 2 months from CA
+- name: Get certificates expiring within N months from CA
   hosts: windows
   gather_facts: no
+  vars:
+    months_ahead: 2   # default value, can be overridden by survey
+
   tasks:
-    - name: Run certutil to get expiring certificates in 2 months
+    - name: Run certutil to get expiring certificates in N months
       win_shell: |
         $today = Get-Date
-        $twoMonthsLater = $today.AddMonths(2)
+        $monthsAhead = {{ months_ahead }}
+        $twoMonthsLater = $today.AddMonths($monthsAhead)
         $todayFormatted = $today.ToString("MM/dd/yyyy")
         $twoMonthsLaterFormatted = $twoMonthsLater.ToString("MM/dd/yyyy")
 
@@ -22,6 +26,6 @@
         Invoke-Expression $certutilCmd
       register: certs_output
 
-    - name: Show certificates expiring within 2 months
+    - name: Show certificates expiring within given months
       debug:
         msg: "{{ certs_output.stdout_lines }}"

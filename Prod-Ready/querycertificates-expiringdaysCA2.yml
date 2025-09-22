@@ -1,0 +1,64 @@
+- name: Debug certificate parsing and expiration dates
+  hosts: 192.168.1.11
+  gather_facts: no
+  vars:
+    months_ahead: 6   # Change this to 48 or whatever you want
+
+  tasks:
+    - name: Run certutil and output certificates expiring soon
+      win_shell: |
+        $monthsAhead = {{ months_ahead }}
+
+        $certutilOutput = certutil -view -out RequestID,CommonName,NotAfter -config "vmware.local\vmware-ADDNS-CA-1"
+
+        $certList = @()
+
+        $currentRequestID = $null
+        $currentCommonName = $null
+        $currentNotAfter = $null
+
+        foreach ($line in $certutilOutput) {
+            if ($line -match '^\s*Issued Request ID: 0x([0-9a-fA-F]+)') {
+                $currentRequestID = $matches[1]
+            }
+            elseif ($line -match '^\s*Issued Common Name: "(.*)"') {
+                $currentCommonName = $matches[1]
+            }
+            elseif ($line -match '^\s*Certificate Expiration Date: (\d{2}/\d{2}/\d{4} \d{1,2}:\d{2} (AM|PM))') {
+                $dateString = $matches[1]
+                $culture = [System.Globalization.CultureInfo]::InvariantCulture
+                $dateFormat = 'dd/MM/yyyy h:mm tt'
+                $parsedDate = [datetime]::ParseExact($dateString, $dateFormat, $culture)
+                $currentNotAfter = $parsedDate
+
+                $certList += [PSCustomObject]@{
+                    RequestID = $currentRequestID
+                    CommonName = $currentCommonName
+                    NotAfterString = $dateString
+                    NotAfterParsed = $currentNotAfter
+                }
+
+                $currentRequestID = $null
+                $currentCommonName = $null
+                $currentNotAfter = $null
+            }
+        }
+
+        $thresholdDate = (Get-Date).AddMonths($monthsAhead)
+        Write-Output "Filtering certificates expiring on or before $thresholdDate ..."
+        $expiringCerts = $certList | Where-Object { $_.NotAfterParsed -le $thresholdDate }
+
+        if ($expiringCerts.Count -gt 0) {
+            Write-Output ""
+            Write-Output "Certificates expiring within next $monthsAhead month(s):"
+            $expiringCerts | Format-Table RequestID, CommonName, NotAfterParsed -AutoSize | Out-String
+        }
+        else {
+            Write-Output ""
+            Write-Output "No certificates expiring within the next $monthsAhead month(s)."
+        }
+      register: cert_debug_output
+
+    - name: Show filtered certificate expiration results
+      debug:
+        msg: "{{ cert_debug_output.stdout }}"

@@ -1,12 +1,12 @@
 ---
-- name: Check certificates expiring within N months
+- name: Debug certificate parsing and expiration dates
   hosts: 192.168.1.11
   gather_facts: no
   vars:
-    months_ahead: 2   # default value; overridden by AWX survey
+    months_ahead: 48
 
   tasks:
-    - name: Run certutil and filter certificates expiring within {{ months_ahead }} month(s)
+    - name: Run certutil and output all certificates with parsed NotAfter date
       win_shell: |
         $monthsAhead = {{ months_ahead }}
 
@@ -31,7 +31,8 @@
                 $certList += [PSCustomObject]@{
                     RequestID = $currentRequestID
                     CommonName = $currentCommonName
-                    NotAfter = $currentNotAfter
+                    NotAfterString = $dateString
+                    NotAfterParsed = $currentNotAfter
                 }
 
                 $currentRequestID = $null
@@ -40,18 +41,24 @@
             }
         }
 
-        $thresholdDate = (Get-Date).AddMonths($monthsAhead)
+        Write-Output "Certificates parsed:"
+        $certList | Format-Table RequestID, CommonName, NotAfterString, NotAfterParsed -AutoSize | Out-String
 
-        $expiringCerts = $certList | Where-Object { $_.NotAfter -le $thresholdDate }
+        $thresholdDate = (Get-Date).AddMonths($monthsAhead)
+        Write-Output ""
+        Write-Output "Filtering certificates expiring on or before $thresholdDate ..."
+        $expiringCerts = $certList | Where-Object { $_.NotAfterParsed -le $thresholdDate }
 
         if ($expiringCerts) {
-            $expiringCerts | Format-Table RequestID, CommonName, NotAfter -AutoSize | Out-String
+            Write-Output ""
+            Write-Output "Certificates expiring within next $monthsAhead month(s):"
+            $expiringCerts | Format-Table RequestID, CommonName, NotAfterParsed -AutoSize | Out-String
         }
         else {
-            "No certificates expiring within the next $monthsAhead month(s)."
+            Write-Output "No certificates expiring within the next $monthsAhead month(s)."
         }
-      register: cert_expiry_output
+      register: cert_debug_output
 
-    - name: Show certificates expiring soon
+    - name: Show parsed certificate details and filtering results
       debug:
-        msg: "{{ cert_expiry_output.stdout }}"
+        msg: "{{ cert_debug_output.stdout }}"

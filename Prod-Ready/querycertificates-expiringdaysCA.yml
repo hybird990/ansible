@@ -44,7 +44,11 @@
             try {
               $notAfter = [datetime]::Parse($notAfterStr, $culture)
               if ($notAfter -lt $expiry -or $revoked) {
-                $status = $revoked ? "Revoked ($revocationDate)" : "Active"
+                if ($revoked) {
+                  $status = "Revoked ($revocationDate)"
+                } else {
+                  $status = "Active"
+                }
                 $results += "RequestID: $requestId`nCommonName: $commonName`nNotAfter: $notAfter`nStatus: $status`n---"
               }
             } catch {

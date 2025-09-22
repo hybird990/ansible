@@ -7,18 +7,29 @@
     days_until_expiry: "{{ days_until_expiry_input | int }}"
 
   tasks:
-    - name: Query expiring certificates using certutil and filter in PowerShell
+    - name: Capture raw certutil output
+      win_shell: certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}"
+      register: cert_output_raw
+
+    - name: Debug raw certutil output (optional, remove if not needed)
+      debug:
+        msg: "{{ cert_output_raw.stdout_lines }}"
+
+    - name: Filter expiring certificates using PowerShell on captured output
       win_shell: |
         $expiry = (Get-Date).AddDays({{ days_until_expiry }})
-        $text = certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}" -split "`n" -join "`n"
+        $text = @'
+{{ cert_output_raw.stdout | join("`n") }}
+'@
+
         $pattern = 'Row \d+:.*?Issued Request ID: (0x[0-9a-f]+).*?Issued Common Name: "?(.+?)"?\s+Certificate Expiration Date: (.+?)\r?$'
         ([regex]::Matches($text, $pattern, 'Singleline') | Where-Object {
           try { ([datetime]$_.Groups[3].Value) -lt $expiry } catch { $false }
         }).ForEach({
           "RequestID: $($_.Groups[1].Value)`nCommonName: $($_.Groups[2].Value)`nNotAfter: $($_.Groups[3].Value)`n---"
         }) -join "`n"
-      register: cert_output
+      register: cert_output_filtered
 
     - name: Display filtered expiring certificates in clean format
       debug:
-        msg: "{{ cert_output.stdout_lines }}"
+        msg: "{{ cert_output_filtered.stdout_lines }}"

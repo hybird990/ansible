@@ -8,10 +8,10 @@
 
   tasks:
     - name: Capture raw certutil output
-      win_shell: certutil -view -out "RequestID,CommonName,NotAfter,RevocationDate" -config "{{ ca_config }}"
+      win_shell: certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}"
       register: cert_output_raw
 
-    - name: Filter expiring certificates using PowerShell
+    - name: Filter and label certificates using PowerShell
       win_shell: |
         $expiry = (Get-Date).AddDays({{ days_until_expiry }})
         $culture = [System.Globalization.CultureInfo]::CreateSpecificCulture("en-AU")
@@ -28,6 +28,7 @@
             $commonName = ''
             $notAfterStr = ''
             $revoked = $false
+            $revocationDate = ''
 
             if ($i+1 -lt $lines.Count -and $lines[$i+1] -match '^Issued Common Name:\s*"?(.+?)"?$') {
               $commonName = $matches[1]
@@ -37,12 +38,14 @@
             }
             if ($i+3 -lt $lines.Count -and $lines[$i+3] -match '^Certificate Revocation Date:\s*(.+)$') {
               $revoked = $true
+              $revocationDate = $matches[1]
             }
 
             try {
               $notAfter = [datetime]::Parse($notAfterStr, $culture)
-              if (-not $revoked -and $notAfter -lt $expiry) {
-                $results += "RequestID: $requestId`nCommonName: $commonName`nNotAfter: $notAfter`n---"
+              if ($notAfter -lt $expiry -or $revoked) {
+                $status = $revoked ? "Revoked ($revocationDate)" : "Active"
+                $results += "RequestID: $requestId`nCommonName: $commonName`nNotAfter: $notAfter`nStatus: $status`n---"
               }
             } catch {
               $results += "Failed to parse date for RequestID: $requestId`nRaw Date: $notAfterStr`n---"
@@ -53,6 +56,6 @@
         $results -join "`n"
       register: cert_output_filtered
 
-    - name: Display filtered expiring certificates
+    - name: Display all matching certificates
       debug:
         msg: "{{ cert_output_filtered.stdout_lines }}"

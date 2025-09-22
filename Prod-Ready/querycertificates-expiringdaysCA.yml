@@ -11,18 +11,11 @@
     - name: Run certutil and save output to a file
       win_shell: certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}" > "{{ temp_file }}"
 
-    - name: Debug raw certutil output file contents
-      win_shell: Get-Content "{{ temp_file }}"
-      register: raw_cert_output
-
-    - name: Show raw certutil output (first 20 lines)
-      debug:
-        msg: "{{ raw_cert_output.stdout_lines[:20] }}"
-
-    - name: Parse certutil output file and filter expiring certificates
+    - name: Parse certutil output and filter certificates expiring within given days
       win_shell: |
         $expiry = (Get-Date).AddDays({{ days_until_expiry }})
         Write-Output "Expiry cutoff date: $expiry"
+
         $lines = Get-Content "{{ temp_file }}"
         $results = @()
 
@@ -33,38 +26,34 @@
             $notAfterStr = ''
 
             if ($i+1 -lt $lines.Count -and $lines[$i+1] -match '^Issued Common Name:\s*"?(.+?)"?$') {
-              $commonName = $matches[1]
+              $commonName = $matches[1] -ne 'EMPTY' ? $matches[1] : ''
             }
+
             if ($i+2 -lt $lines.Count -and $lines[$i+2] -match '^Certificate Expiration Date:\s*(.+)$') {
               $notAfterStr = $matches[1]
             }
 
-            Write-Output "Parsing RequestID: $requestId, CommonName: $commonName, NotAfter: $notAfterStr"
-
             try {
-              $notAfter = Get-Date $notAfterStr
-              Write-Output "Parsed NotAfter date: $notAfter"
+              $notAfter = Get-Date $notAfterStr -ErrorAction Stop
               if ($notAfter -lt $expiry) {
-                $results += "RequestID: $requestId`nCommonName: $commonName`nNotAfter: $notAfter`n---"
+                $results += "RequestID: $requestId`nCommonName: $commonName`nExpires: $notAfter`n---"
               }
-            } catch {
-              Write-Output "Failed to parse date: $notAfterStr"
-            }
+            } catch { }
           }
         }
 
         if ($results.Count -eq 0) {
-          Write-Output "No certificates expiring within $({{ days_until_expiry }}) days."
+          Write-Output "No certificates expiring within {{ days_until_expiry }} days."
+        } else {
+          $results -join "`n"
         }
+      register: filtered_certs
 
-        $results -join "`n"
-      register: cert_output_filtered
-
-    - name: Display filtered expiring certificates in clean format
+    - name: Show filtered expiring certificates
       debug:
-        msg: "{{ cert_output_filtered.stdout_lines }}"
+        msg: "{{ filtered_certs.stdout_lines }}"
 
-    - name: Remove temporary file
+    - name: Clean up temporary file
       win_file:
         path: "{{ temp_file }}"
         state: absent

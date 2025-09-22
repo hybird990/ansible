@@ -1,0 +1,47 @@
+---
+# Survey Inputs (examples)
+# example "{{ cert_thumbprint }}" b03d22a42a8c7c5d3eea6f7659a4aeb1f17de8aa
+# example "{{ cert_export_path }}" C:\temp\renewed\servername_renewed_cert.pfx
+# example "{{ pfx_password }}" VMware123!VMware123!
+# example "{{ ca_config }}" addns.vmware.local\vmware-ADDNS-CA-1
+
+- name: Renew certificate and export to PFX on Windows hosts
+  hosts: 192.168.1.11
+  gather_facts: no
+  tasks:
+    - name: Renew the certificate and export to PFX (no error checking)
+      win_shell: |
+        $thumb = "{{ cert_thumbprint }}"
+        $cert = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Thumbprint -eq $thumb }
+
+        $infLines = @(
+          "[Version]"
+          'Signature="$Windows NT$"'
+          ""
+          "[RenewalRequest]"
+          "RenewalCert=$thumb"
+          "RenewalCertStore=My"
+          "RequestType=PKCS10"
+          ""
+          "[RequestAttributes]"
+          "CertificateTemplate=webserver1"
+        )
+
+        $infPath = Join-Path $env:TEMP "renew.inf"
+        $infLines | Out-File -FilePath $infPath -Encoding ascii -Force
+
+        $renewReq = Join-Path $env:TEMP "renew.req"
+        $renewCer = Join-Path $env:TEMP "renewed.cer"
+
+        certreq -new $infPath $renewReq
+        certreq -submit -attrib "CertificateTemplate=webserver1" -config "{{ ca_config }}" $renewReq $renewCer
+        certreq -accept $renewCer
+
+        $newCert = Get-ChildItem Cert:\LocalMachine\My | Where-Object {
+          $_.Subject -eq $cert.Subject -and $_.NotAfter -gt $cert.NotAfter
+        } | Sort-Object NotAfter -Descending | Select-Object -First 1
+
+        $pass = ConvertTo-SecureString "{{ pfx_password }}" -AsPlainText -Force
+        Export-PfxCertificate -Cert $newCert -FilePath "{{ cert_export_path }}" -Password $pass -Force
+      args:
+        executable: powershell.exe

@@ -1,6 +1,6 @@
 ---
 - name: Get certificates expiring within N months from CA
-  hosts: windows
+  hosts: 192.168.1.11
   gather_facts: no
   vars:
     months_ahead: 2   # default value, can be overridden by survey

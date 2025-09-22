@@ -9,12 +9,13 @@
 
   tasks:
     - name: Run certutil and save output to a file
-      win_shell: certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}" > "{{ temp_file }}"
+      win_shell: |
+        certutil -view -out "RequestID,CommonName,NotAfter" -config "{{ ca_config }}" > "{{ temp_file }}"
 
     - name: Parse certutil output and filter certificates expiring within given days
       win_shell: |
-        $expiry = (Get-Date).AddDays({{ days_until_expiry }})
-        Write-Output "Expiry cutoff date: $expiry"
+        $expiryCutoff = (Get-Date).AddDays({{ days_until_expiry }})
+        Write-Output "Expiry cutoff date: $expiryCutoff"
 
         $lines = Get-Content "{{ temp_file }}"
         $results = @()
@@ -25,35 +26,41 @@
             $commonName = ''
             $notAfterStr = ''
 
-            if ($i+1 -lt $lines.Count -and $lines[$i+1] -match '^Issued Common Name:\s*"?(.+?)"?$') {
-              if ($matches[1] -ne 'EMPTY') {
-                $commonName = $matches[1]
-              }
+            if ($i + 1 -lt $lines.Count -and $lines[$i + 1] -match '^Issued Common Name:\s*"?(.+?)"?$') {
+              $commonName = $matches[1]
+              if ($commonName -eq 'EMPTY') { $commonName = '' }
             }
 
-            if ($i+2 -lt $lines.Count -and $lines[$i+2] -match '^Certificate Expiration Date:\s*(.+)$') {
+            if ($i + 2 -lt $lines.Count -and $lines[$i + 2] -match '^Certificate Expiration Date:\s*(.+)$') {
               $notAfterStr = $matches[1]
             }
 
+            # Parse the date with explicit format dd/MM/yyyy h:mm tt (e.g. 29/08/2025 9:28 AM)
+            $format = 'dd/MM/yyyy h:mm tt'
+            $culture = [System.Globalization.CultureInfo]::InvariantCulture
             try {
-              $notAfter = Get-Date $notAfterStr -ErrorAction Stop
-              if ($notAfter -lt $expiry) {
+              $notAfter = [datetime]::ParseExact($notAfterStr, $format, $culture)
+              if ($notAfter -lt $expiryCutoff) {
                 $results += "RequestID: $requestId`nCommonName: $commonName`nExpires: $notAfter`n---"
               }
-            } catch { }
+            }
+            catch {
+              Write-Output "Warning: Failed to parse date: $notAfterStr"
+            }
           }
         }
 
         if ($results.Count -eq 0) {
           Write-Output "No certificates expiring within {{ days_until_expiry }} days."
-        } else {
+        }
+        else {
           $results -join "`n"
         }
-      register: filtered_certs
+      register: cert_output_filtered
 
     - name: Display filtered expiring certificates in clean format
       debug:
-        msg: "{{ filtered_certs.stdout_lines }}"
+        msg: "{{ cert_output_filtered.stdout_lines }}"
 
     - name: Remove temporary file
       win_file:

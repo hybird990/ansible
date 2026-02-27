@@ -1,0 +1,76 @@
+HyperV setup on PowerEdge r730
+
+1. install windows 2025 datacenter (desktop experience)
+2. give it ip address -   192.168.1.18, 192.168.1.19
+3. give it a name - esxi-3.vmware.local
+3. Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+4. Install-WindowsFeature -Name Hyper-V -IncludeManagementTools (becomes a Hyper-V host)
+5. New-VMSwitch -Name "External-Switch" -NetAdapterName "NIC2" -AllowManagementOS $true
+6. msc check virtmgmt.msc - hyperV manager
+7. Install Windows Admin Center (WAC) - new look
+https://aka.ms/WACDownload
+8. Set Power Plan: Switch to the High Performance power plan
+9 access wac https://esxi-3/servermanager/
+10. Migration Tool > setting > extensions > VM Conversion > install it
+11. connect to vcenter using vm conversion - go back to main page
+under extensiosn click vm conversions(preview) > click connect to vcenter "click prepare evniroment(install powercli)
+12. Add > fqdn vc, username ane password > submit
+13. Select vms and click sync (remove any snapshsts, unmount isos) Currently, VMs running on VMware vSAN are not supported by this specific tool; they must be on standard storage.
+
+Pre-checks failed: Pre-check failed: Visual C++ Redistributable not found. Please install either Visual C++ Redistributable 2013 or 2015, and also Visual C++ Redistributable 2022, then try again.. (2%)
+
+
+14. Install Required Runtimes
+# Install the 2013 Runtimes (Both x86 and x64)
+winget install Microsoft.VCRedist.2013.x86 --silent
+winget install Microsoft.VCRedist.2013.x64 --silent
+
+# Install the 2015-2022 Combined Runtimes (Both x86 and x64)
+winget install Microsoft.VCRedist.2015+.x86 --silent
+winget install Microsoft.VCRedist.2015+.x64 --silent
+
+Restart the Windows Admin Center Service
+Restart-Service ServerManagementGateway
+
+
+Pre-checks failed: Pre-check failed: The VDDK library is missing from C:\Program Files\WindowsAdminCenter\Service\VDDK.
+Please download VDDK version 8.0.3, extract it, and place the extracted contents into this directory to proceed.. (3%
+
+15.
+https://developer.broadcom.com/sdks/vmware-virtual-disk-development-kit-vddk/8.0
+extract here
+C:\Program Files\WindowsAdminCenter\Service\VDDK
+create the VDDK folder
+
+16. vlan are tag at vm level not at switch level like VMware
+Step 2 – Set VLAN Tag on VM
+
+Open VM Settings
+Network Adapter
+Enable:
+Enable virtual LAN identification”
+Enter VLAN ID (example: 10)
+
+17. vlan trunking
+add at vm level example
+Set-VMNetworkAdapterVlan -VMName "YourVMName" -Trunk -NativeVlanId 0 -AllowedVlanIdList "1-4094"
+
+VM1 → Access VLAN 10
+VM2 → Access VLAN 20
+VM3 → Trunk (like VMware 4095)
+
+18. once sync is completed click the migrate tab, select vm and choose migrate, click proceed
+19. Once completed all vlan to the vm
+Set-VMNetworkAdapterVlan -VMName "vyos1-10.0.0.x" -Trunk -NativeVlanId 0 -AllowedVlanIdList "1-4096"
+20. Power on vm, connect using your admin details
+
+
+Set-VMNetworkAdapterVlan -VMName "ipam" -Untagged (works mgmt)
+Set-VMNetworkAdapterVlan -VMName "VM-VLAN10" -Access -VlanId 10
+Set-VMNetworkAdapterVlan -VMName "DC-DNS-CA-10.0.0.150" -Trunk -NativeVlanId 0 -AllowedVlanIdList "1-4094"
+
+21. Uninstall vmtools usescript 
+powershell.exe -ExecutionPolicy Bypass
+then run script
+
+alot of the Linux issues and appliances is mac address hardcoding

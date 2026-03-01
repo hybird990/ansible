@@ -1,0 +1,255 @@
+Hyper‑V 2025 Failover Cluster – Clean Instructions (Cluster Section Only)
+
+Cluster Type: SMB3
+Cluster IP: 192.168.1.50
+NIC1: 10.0.0.x (Cluster / CSV / Heartbeat)
+NIC2: 192.168.1.x (Management + VM Traffic)
+Supported Storage: SMB3, iSCSI, FC, SAS
+Not Supported: NFS, SMB1/2, USB, local disks
+
+1. Configure NIC1 (Cluster Network)
+
+hyperv1:
+10.0.0.2/24
+No gateway
+No DNS
+Do not register in DNS
+
+hyperv2:
+10.0.0.3/24
+No gateway
+No DNS
+Do not register in DNS
+
+Commands for hyperv1:
+New-NetIPAddress -InterfaceAlias NIC1 -IPAddress 10.0.0.2 -PrefixLength 24
+Set-DnsClientServerAddress -InterfaceAlias NIC1 -ServerAddresses @()
+Set-DnsClient -InterfaceAlias NIC1 -RegisterThisConnectionsAddress $false
+
+Commands for hyperv2:
+New-NetIPAddress -InterfaceAlias NIC1 -IPAddress 10.0.0.3 -PrefixLength 24
+Set-DnsClientServerAddress -InterfaceAlias NIC1 -ServerAddresses @()
+Set-DnsClient -InterfaceAlias NIC1 -RegisterThisConnectionsAddress $false
+
+2. Configure NIC2 (Management Network)
+
+hyperv1:
+192.168.1.18/24
+Gateway 192.168.1.1
+DNS 192.168.1.11
+
+hyperv2:
+192.168.1.19/24
+Gateway 192.168.1.1
+DNS 192.168.1.11
+
+NIC2 is used for:
+Domain join
+Hyper‑V Manager
+Windows Admin Center
+VM traffic
+Cluster IP (192.168.1.50)
+
+3. Install Failover Clustering
+Install-WindowsFeature -Name Failover-Clustering -IncludeManagementTools
+Import-Module FailoverClusters
+
+4. Prepare SMB3 Storage
+SMB3 only
+No NFS
+No SMB1/2
+Continuous Availability ON (if Windows File Server)
+Permissions required:
+hyperv1$
+hyperv2$
+hypervcluster$ (after cluster creation)
+
+Example share:
+\\truenas\hyperv-smb
+
+5. Validate Cluster
+Test-Cluster -Node hyperv1, hyperv2
+
+6. Create Cluster
+New-Cluster -Name hypervcluster -Node hyperv1, hyperv2 -StaticAddress 192.168.1.50
+
+7. Cluster Network Behavior (Correct)
+Expected:
+Cluster Network 1 → 10.0.0.x
+
+Notes:
+192.168.1.x will not appear as a cluster network
+This is correct
+vEthernet NICs are public-only
+Cluster traffic uses NIC1 only
+Management and VM traffic uses NIC2
+This is the standard Microsoft production design.
+
+8. Set NIC Metrics
+Set-NetIPInterface -InterfaceAlias NIC1 -AddressFamily IPv4 -InterfaceMetric 10
+Set-NetIPInterface -InterfaceAlias "vEthernet (External-Switch)" -AddressFamily IPv4 -InterfaceMetric 50
+
+9. Restart Cluster Service
+Stop-Service ClusSvc
+Start-Service ClusSvc
+
+10. Verify Cluster Networks
+Get-ClusterNetwork
+Get-ClusterNetworkInterface
+
+Expected:
+Cluster Network 1 → 10.0.0.0 (Cluster)
+hyperv1 - NIC1
+hyperv2 - NIC1
+hyperv1 - vEthernet (External-Switch)
+hyperv2 - vEthernet (External-Switch)
+
+11. Summary
+You should only see one cluster network (10.0.0.x).
+The 192.168.1.x network is management-only and will not appear.
+Cluster traffic is isolated to NIC1.
+Management and VM traffic stays on NIC2.
+SMB3 storage is supported.
+NFS is not supported.
+Configuration is production-ready.
+
+
+
+------------------------------------------------------------------
+
+Hyper‑V 2025 Failover Cluster – iSCSI CSV Storage with TrueNAS SCALE
+Cluster Name: hypervcluster
+Nodes: hyperv1, hyperv2
+Storage Type: iSCSI (TrueNAS SCALE)
+LUN Size: 90 GB (ZVOL)
+
+============================================================
+1. TrueNAS SCALE – Create ZVOL (GUI)
+============================================================
+
+Storage → Datasets → <pool> → Add Zvol
+
+Name: hyperv-csv
+Size: 90 GiB
+Block Size: 16K
+Compression: LZ4
+Sync: Disabled
+Thin Provisioning: Enabled
+Deduplication: Off
+Read‑only: Off
+
+Save.
+
+============================================================
+2. TrueNAS SCALE – Create iSCSI Target (GUI)
+============================================================
+
+Sharing → Block (iSCSI) → Wizard
+
+Target Name: hyperv-target
+Extent Type: Device
+Device: <pool>/hyperv-csv
+Portal: 0.0.0.0 (or specific IP)
+Initiators: ALL (or restrict later)
+Authentication: None
+
+Finish.
+
+============================================================
+3. TrueNAS SCALE – Verify iSCSI Service
+============================================================
+
+System Settings → Services → iSCSI → Enabled + Running
+
+============================================================
+4. Hyper‑V Node – Connect to iSCSI Target
+============================================================
+
+On hyperv1 and hyperv2:
+
+Open iSCSI Initiator → Targets tab
+Enter TrueNAS IP: 192.168.1.186
+Click Quick Connect → hyperv-target → Connected
+
+Volumes and Devices → Auto Configure
+
+Expected:
+A new disk appears (90 GB)
+
+============================================================
+5. Prepare Disk on First Node (hyperv1)
+============================================================
+
+Open Disk Management:
+
+Disk shows as:
+Unknown / Offline / Unallocated / 90 GB
+
+Steps:
+- Right‑click → Online
+- Right‑click → Initialize Disk (GPT)
+- Create New Simple Volume
+- Do NOT assign a drive letter
+- Format NTFS (label: CSV1)
+- When finished → Right‑click → Offline
+
+============================================================
+6. Validate Disk on Second Node (hyperv2)
+============================================================
+
+Open Disk Management:
+
+- Right‑click the 90 GB disk → Online
+- Confirm NTFS volume appears
+- Right‑click → Offline
+
+============================================================
+7. Add Disk to Failover Cluster
+============================================================
+
+Failover Cluster Manager:
+Storage → Disks → Add Disk
+
+Select the 90 GB iSCSI disk.
+
+Expected:
+Disk appears as "Available Storage".
+
+============================================================
+8. Convert Disk to Cluster Shared Volume (CSV)
+============================================================
+
+Failover Cluster Manager:
+Storage → Disks → Right‑click disk → Add to Cluster Shared Volumes
+
+Expected:
+CSV mounts under:
+C:\ClusterStorage\Volume1
+
+============================================================
+9. Verify CSV
+============================================================
+
+Get-ClusterSharedVolume
+
+Expected:
+Cluster Shared Volume 1
+CSVFS path: C:\ClusterStorage\Volume1
+
+============================================================
+10. Place VMs on CSV
+============================================================
+
+VM files must be stored under:
+C:\ClusterStorage\Volume1\<VMName>
+
+============================================================
+11. Summary
+============================================================
+
+- TrueNAS ZVOL is exported via iSCSI.
+- Both Hyper‑V nodes connect to the same LUN.
+- Disk is initialized on one node, validated on the other.
+- Cluster imports the disk and converts it to CSV.
+- CSV appears under C:\ClusterStorage\Volume1.
+- Ready for clustered VM storage and live migration.

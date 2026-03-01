@@ -1,0 +1,192 @@
+HYPER-V 2025 + VMWARE MIGRATION + TRUENAS ISCSI CSV CLUSTER
+FULL CLEAN NOTEPAD VERSION (NO SMB3, NO ESXI, VCENTER = vc1.vmware.local)
+
+Hyper-V setup on PowerEdge R730
+
+Install Windows Server 2025 Datacenter (Desktop Experience)
+
+Configure IP addresses
+hyperv1:
+NIC1: 10.0.0.2/24 (no gateway, no DNS, do not register in DNS)
+NIC2: 192.168.1.18/24 gateway 192.168.1.1 DNS 192.168.1.11
+
+hyperv2:
+NIC1: 10.0.0.3/24 (no gateway, no DNS, do not register in DNS)
+NIC2: 192.168.1.19/24 gateway 192.168.1.1 DNS 192.168.1.11
+
+Rename servers
+hyperv1.vmware.local
+hyperv2.vmware.local
+
+Install Hyper-V
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+Install-WindowsFeature -Name Hyper-V -IncludeManagementTools
+
+Create External Virtual Switch
+New-VMSwitch -Name "External-Switch" -NetAdapterName "NIC2" -AllowManagementOS $true
+
+Verify Hyper-V Manager (virtmgmt.msc)
+
+Install Windows Admin Center (WAC)
+Download from https://aka.ms/WACDownload
+Access via https://hyperv1/servermanager/ or https://hyperv2/servermanager/
+
+Set High Performance power plan
+
+Install WAC VM Conversion extension
+WAC > Settings > Extensions > VM Conversion > Install
+
+Connect WAC to vCenter
+vCenter FQDN: vc1.vmware.local
+Install PowerCLI when prompted
+Add vCenter credentials
+Sync VMs (remove snapshots, unmount ISOs)
+Note: VMware vSAN VMs are not supported
+
+Fix VM Conversion pre-check errors
+
+Install Visual C++ runtimes:
+winget install Microsoft.VCRedist.2013.x86 --silent
+winget install Microsoft.VCRedist.2013.x64 --silent
+winget install Microsoft.VCRedist.2015+.x86 --silent
+winget install Microsoft.VCRedist.2015+.x64 --silent
+Restart-Service ServerManagementGateway
+
+Install VMware VDDK 8.0.3:
+Download from Broadcom
+Extract to:
+C:\Program Files\WindowsAdminCenter\Service\VDDK
+
+VLAN configuration in Hyper-V
+VLANs are set at VM level, not switch level.
+
+Access VLAN:
+Set-VMNetworkAdapterVlan -VMName "VM-VLAN10" -Access -VlanId 10
+
+Trunk VLAN (VMware 4095 equivalent):
+Set-VMNetworkAdapterVlan -VMName "vyos1" -Trunk -NativeVlanId 0 -AllowedVlanIdList "1-4094"
+
+Untagged:
+Set-VMNetworkAdapterVlan -VMName "ipam" -Untagged
+
+Migrate VMware VMs
+WAC > VM Conversions > Migrate
+After migration, reapply VLANs
+
+Remove VMware Tools (Windows or Linux)
+Run your uninstall script:
+powershell.exe -ExecutionPolicy Bypass
+
+HYPER-V 2025 FAILOVER CLUSTER (ISCSI ONLY)
+
+Cluster Name: hypervcluster
+Cluster IP: 192.168.1.50
+Nodes: hyperv1, hyperv2
+
+Supported storage: iSCSI, FC, SAS
+Not supported: SMB1, SMB2, SMB3, NFS, USB, local disks
+
+Install Failover Clustering
+Install-WindowsFeature -Name Failover-Clustering -IncludeManagementTools
+Import-Module FailoverClusters
+
+Validate cluster
+Test-Cluster -Node hyperv1, hyperv2
+
+Create cluster
+New-Cluster -Name hypervcluster -Node hyperv1, hyperv2 -StaticAddress 192.168.1.50
+
+Cluster network behavior
+Only NIC1 (10.0.0.x) appears as a cluster network
+NIC2 (192.168.1.x) is management only
+This is correct
+
+Set NIC metrics
+Set-NetIPInterface -InterfaceAlias NIC1 -AddressFamily IPv4 -InterfaceMetric 10
+Set-NetIPInterface -InterfaceAlias "vEthernet (External-Switch)" -AddressFamily IPv4 -InterfaceMetric 50
+
+Restart cluster service
+Stop-Service ClusSvc
+Start-Service ClusSvc
+
+Verify cluster networks
+Get-ClusterNetwork
+Get-ClusterNetworkInterface
+
+Expected:
+Cluster Network 1 = 10.0.0.x only
+
+TRUENAS SCALE ISCSI CSV STORAGE
+
+Create ZVOL in TrueNAS
+Name: hyperv-csv
+Size: 90 GiB
+Block size: 16K
+Compression: LZ4
+Thin provisioning: Enabled
+
+Create iSCSI target
+Target: hyperv-target
+Extent: hyperv-csv
+Portal: 0.0.0.0
+Initiators: ALL
+
+Enable iSCSI service
+
+Connect Hyper-V nodes to iSCSI
+iSCSI Initiator > Targets > Quick Connect
+Volumes and Devices > Auto Configure
+
+Prepare disk on hyperv1
+Online disk
+Initialize GPT
+Format NTFS (label CSV1)
+Do NOT assign drive letter
+Offline disk
+
+Validate disk on hyperv2
+Online disk
+Confirm NTFS
+Offline disk
+
+Add disk to cluster
+Failover Cluster Manager > Storage > Disks > Add Disk
+
+Convert disk to CSV
+Right-click disk > Add to Cluster Shared Volumes
+
+CSV path:
+C:\ClusterStorage\Volume1
+
+Store VMs on CSV
+C:\ClusterStorage\Volume1\VMName
+
+CPU COMPATIBILITY FOR LIVE MIGRATION
+
+If CPUs differ between nodes, enable compatibility.
+
+Enable for all OFF VMs:
+Get-VM | Where-Object {$_.State -eq 'Off'} | Set-VMProcessor -CompatibilityForMigrationEnabled $true
+
+MANUAL VM MOVE FROM PROGRAMDATA TO CSV
+
+If a VM was originally created on standalone Hyper-V:
+
+Shut down VM
+
+Copy VM files from:
+C:\ProgramData\Microsoft\Windows\Hyper-V\
+to:
+C:\ClusterStorage\Volume1\VMName\
+
+Remove VM from cluster (does not delete files)
+
+Delete VM from Hyper-V Manager (does not delete files)
+
+Import VM from CSV using "Register in-place"
+
+Add VM back to cluster
+
+Test live migration
+
+END OF NOTEPAD VERSION

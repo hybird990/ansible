@@ -1,0 +1,40 @@
+docker stop minikube
+docker rm minikube
+
+minikube delete --all --purge
+
+rm -rf ~/.minikube
+rm -rf ~/.kube
+rm -rf /tmp/hostpath-provisioner/awx
+
+minikube start --driver=docker --cpus=2 --memory=4096 --force
+
+kubectl create namespace awx
+
+kubectl apply -k github.com/ansible/awx-operator/config/default?ref=2.19.1
+
+cat > awx-demo.yaml <<'EOF'
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx-demo
+  namespace: awx
+spec:
+  service_type: nodeport
+EOF
+
+kubectl apply -f awx-demo.yaml
+
+-----------------------------------------------------------------------------
+Wait for pods:
+kubectl get pods -n awx -w
+
+When postgres, web and task are all Running:
+kubectl get secret awx-demo-admin-password -n awx -o jsonpath="{.data.password}" | base64 -d && echo
+Show more lines
+
+Expose AWX:(should remain open)
+kubectl port-forward -n awx svc/awx-demo-service 8080:80 --address 0.0.0.0
+
+Browse to:
+http://192.168.1.162:8080
